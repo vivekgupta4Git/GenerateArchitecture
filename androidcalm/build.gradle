@@ -1,5 +1,8 @@
 import com.squareup.kotlinpoet.FileSpec
 
+class CreateMvvm{
+    String packageName
+}
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
@@ -40,15 +43,17 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-apply {
-    plugin(GreetingPlugin)
-}
+apply plugin :GreetingPlugin
 
 class GreetingPlugin implements Plugin<Project>{
 
     @Override
     void apply(Project project) {
-        project.task("generateSample"){
+        CreateMvvm extension = project.extensions
+                .create("createMvvm",CreateMvvm.class)
+
+        project.tasks.register("createMvvm"){
+            println("Extension properties " + extension.packageName)
             def androidExtension = project.extensions.findByName("android")
 
             doLast {
@@ -79,4 +84,9 @@ class GreetingPlugin implements Plugin<Project>{
             }
         }
     }
+}
+
+
+createMvvm {
+    packageName = "Nice"
 }
