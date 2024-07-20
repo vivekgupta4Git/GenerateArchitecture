@@ -1,3 +1,5 @@
+import com.squareup.kotlinpoet.FileSpec
+
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
@@ -37,4 +39,44 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+apply {
+    plugin(GreetingPlugin)
+}
+
+class GreetingPlugin implements Plugin<Project>{
+
+    @Override
+    void apply(Project project) {
+        project.task("generateSample"){
+            def androidExtension = project.extensions.findByName("android")
+
+            doLast {
+                def mainSourceDirectory
+                project.android.sourceSets.each {
+                    sourceSet ->
+                        if(sourceSet.name.startsWith("main")) {
+                            for (File file : sourceSet.java.getSrcDirs())
+                                if (file.exists()) {
+                                    def namespace = androidExtension.properties.get("namespace").split('\\.')
+                                    mainSourceDirectory = "$file.path" + "/${namespace[0]}/${namespace[1]}/${namespace[2]}"
+                                    break
+                                }
+                        }
+
+                }
+                if(mainSourceDirectory)
+                {
+                    def dir = new File(mainSourceDirectory)
+                    def packageName = androidExtension.properties.get("namespace").toString()
+                    def fileSpec = FileSpec.builder(packageName,"GradleLovesKotlinPoet").build()
+                    def kotlinFile = new File(dir,"GradleLovesKotlinPoet.kt")
+                    kotlinFile.withWriter('UTF-8'){
+                        writer ->
+                            fileSpec.writeTo(writer)
+                    }
+                }
+            }
+        }
+    }
 }
