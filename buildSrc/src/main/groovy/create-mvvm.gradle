@@ -1,0 +1,45 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.tasks.TaskAction
+
+abstract class GenerateMvvm extends DefaultTask{
+
+    @TaskAction
+    void action(){
+        def androidExtension = project.extensions.findByName("android")
+            def mainSourceDirectory
+            project.android.sourceSets.each {
+                sourceSet ->
+                    if(sourceSet.name.startsWith("main")) {
+                        for (File file : sourceSet.java.getSrcDirs())
+                            if (file.exists()) {
+                                def namespaceCollection = androidExtension.properties.get("namespace").split('\\.')
+                                def namespace = ""
+                                namespaceCollection.each { part ->
+                                    namespace = namespace + "/$part"
+                                }
+                                mainSourceDirectory = "$file.path" + "${namespace}"
+                                break
+                            }
+                    }
+            }
+            if(mainSourceDirectory){
+                println("source directory = " + mainSourceDirectory)
+            }
+            else {
+                println("unable to find the android main source set")
+            }
+    }
+}
+
+
+abstract class Mvvm implements Plugin<Project>{
+    @Override
+    void apply(Project project) {
+            project.tasks.register("mvvm",GenerateMvvm.class){
+               group = "Architecture Plugin"
+               description = "Generate directory structure according to Mvvm Architecture"
+            }
+    }
+}
