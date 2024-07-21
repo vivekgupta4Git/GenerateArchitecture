@@ -1,6 +1,12 @@
 plugins{
     id 'groovy-gradle-plugin'
 }
+dependencies {
+    implementation('com.squareup:kotlinpoet:1.18.1')
+}
+repositories {
+    mavenCentral()
+}
 gradlePlugin {
     plugins {
         mvvmPlugin{

@@ -1,11 +1,7 @@
-import com.squareup.kotlinpoet.FileSpec
-
-class CreateMvvm{
-    String packageName
-}
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'mvvm'
 }
 
 android {
@@ -35,58 +31,10 @@ android {
 }
 
 dependencies {
-    implementation("com.squareup:kotlinpoet:1.18.1")
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
-apply plugin :GreetingPlugin
-
-class GreetingPlugin implements Plugin<Project>{
-
-    @Override
-    void apply(Project project) {
-        CreateMvvm extension = project.extensions
-                .create("createMvvm",CreateMvvm.class)
-
-        project.tasks.register("createMvvm"){
-            println("Extension properties " + extension.packageName)
-            def androidExtension = project.extensions.findByName("android")
-
-            doLast {
-                def mainSourceDirectory
-                project.android.sourceSets.each {
-                    sourceSet ->
-                        if(sourceSet.name.startsWith("main")) {
-                            for (File file : sourceSet.java.getSrcDirs())
-                                if (file.exists()) {
-                                    def namespace = androidExtension.properties.get("namespace").split('\\.')
-                                    mainSourceDirectory = "$file.path" + "/${namespace[0]}/${namespace[1]}/${namespace[2]}"
-                                    break
-                                }
-                        }
-
-                }
-                if(mainSourceDirectory)
-                {
-                    def dir = new File(mainSourceDirectory)
-                    def packageName = androidExtension.properties.get("namespace").toString()
-                    def fileSpec = FileSpec.builder(packageName,"GradleLovesKotlinPoet").build()
-                    def kotlinFile = new File(dir,"GradleLovesKotlinPoet.kt")
-                    kotlinFile.withWriter('UTF-8'){
-                        writer ->
-                            fileSpec.writeTo(writer)
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-createMvvm {
-    packageName = "Nice"
 }

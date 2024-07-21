@@ -2,7 +2,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
-
+import com.squareup.kotlinpoet.FileSpec
 abstract class GenerateMvvm extends DefaultTask{
 
     @TaskAction
@@ -25,7 +25,14 @@ abstract class GenerateMvvm extends DefaultTask{
                     }
             }
             if(mainSourceDirectory){
-                println("source directory = " + mainSourceDirectory)
+                def dir = new File(mainSourceDirectory)
+                def packageName = androidExtension.properties.get("namespace").toString()
+                def fileSpec = FileSpec.builder(packageName,"GradleLovesKotlinPoet").build()
+                def kotlinFile = new File(dir,"GradleLovesKotlinPoet.kt")
+                kotlinFile.withWriter('UTF-8'){
+                    writer ->
+                        fileSpec.writeTo(writer)
+                }
             }
             else {
                 println("unable to find the android main source set")
