@@ -66,3 +66,18 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
+mvvmConfig {
+    model {
+        name = "data"
+        subPath = "mysubpath/morenestedpath/"
+    }
+    view {
+        name = "Presentation"
+        subPath = "mysubpath/morenestedpath/"
+    }
+    viewModel {
+        name = "CustomViewModel"
+        subPath = "myViewModel/common/"
+    }
+
+}

@@ -1,8 +1,10 @@
 import com.squareup.kotlinpoet.FileSpec
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 abstract class GenerateMvvm extends DefaultTask{
@@ -47,8 +49,27 @@ abstract class GenerateMvvm extends DefaultTask{
                 def dir = new File(projectPath + namespace)
                 if(!dir.exists())
                     dir.mkdirs()
+        
+             println(project.extensions["mvvmConfig"]
+                     .properties["model"]["name"].get()) //using map getter
 
-                def packageName = androidExtension.properties.get("namespace").toString()
+                    println(project.extensions["mvvmConfig"]
+                        .properties["model"]["subPath"].get()) //using map getter
+
+                println(project.extensions["mvvmConfig"]
+                        .properties["viewModel"]["name"].get()) //using map getter
+
+                println(project.extensions["mvvmConfig"]
+                        .properties["viewModel"]["subPath"].get()) //using map getter
+
+                println(project.extensions["mvvmConfig"]
+
+                        .properties["view"]["name"].get()) //using map getter
+
+                println(project.extensions["mvvmConfig"]
+                        .properties["view"]["subPath"].get()) //using map getter
+
+        def packageName = androidExtension.properties.get("namespace").toString()
                 def fileSpec = FileSpec.builder(packageName,"GradleLovesKotlinPoet").build()
                 def kotlinFile = new File(dir,"GradleLovesKotlinPoet.kt")
                 kotlinFile.withWriter('UTF-8'){
@@ -64,15 +85,60 @@ abstract class Mvvm implements Plugin<Project>{
     @Override
     void apply(Project project) {
                 def mvvmPluginExtensionDefaultValue =project.extensions.create("mvvmGreeting",MvvmPluginExtension)
+                def mvvmConfiguration = project.extensions.create("mvvmConfig",MvvmConfigurationExtension)
                 project.tasks.register("mvvm",GenerateMvvm.class){
                group = "Architecture Plugin"
                description = "Generate directory structure according to Mvvm Architecture"
                 mvvmPluginExtensionDefaultValue.message.convention("Hi from mvvm with Default value !!")
-            }
+                    mvvmConfiguration.model {
+                        name.convention("Data")
+                        subPath.convention("")
+                    }
+                    mvvmConfiguration.viewModel {
+                        name.convention("ViewModel")
+                        subPath.convention("")
+                    }
+                    mvvmConfiguration.view {
+                        name.convention("Ui")
+                        subPath.convention("")
+                    }
+                }
     }
 }
 
 
 interface MvvmPluginExtension{
     Property<String> getMessage()
+}
+abstract class MvvmConfigurationExtension{
+    @Nested
+    abstract Model getModel();
+    @Nested
+    abstract ViewModel getViewModel();
+    @Nested
+    abstract View getView()
+
+    void model(Action<? super Model> action) {
+        action.execute(getModel())
+    }
+    void view(Action<? super Model> action) {
+        action.execute(getView())
+    }
+    void viewModel(Action<? super Model> action) {
+        action.execute(getViewModel())
+    }
+}
+
+
+abstract class Model{
+    abstract Property<String> getName()
+    abstract Property<String> getSubPath()
+}
+abstract class View{
+    abstract Property<String> getName()
+    abstract Property<String> getSubPath()
+}
+abstract class ViewModel{
+    abstract Property<String> getName()
+    abstract Property<String> getSubPath()
 }
