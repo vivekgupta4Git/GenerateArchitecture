@@ -1,8 +1,7 @@
-import com.squareup.kotlinpoet.*
-
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'mvvm'
 }
 
 android {
@@ -49,8 +48,6 @@ android {
 }
 
 dependencies {
-    //implementation(project(":androidcalm"))
-    implementation('com.squareup:kotlinpoet:1.18.1')
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
@@ -69,32 +66,18 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
-
-task createDirectory {
-    doLast {
-
-        def mainSourceDirectory
-        project.android.sourceSets.each {
-            sourceSet ->
-                if(sourceSet.name.startsWith("main")) {
-                    for (File file : sourceSet.java.getSrcDirs())
-                        if (file.exists()) {
-                            def namespace = android.namespace.split('\\.')
-                            mainSourceDirectory = "$file" + "/${namespace[0]}/${namespace[1]}/${namespace[2]}"
-                            break
-                        }
-                }
-                if(mainSourceDirectory)
-                    {
-                        def dir = new File(mainSourceDirectory)
-                        def fileSpec = FileSpec.builder(android.namespace + "GradleLovesKotlinPoet").build()
-                        def kotlinFile = new File(dir,"GradleLovesKotlinPoet.kt")
-                        kotlinFile.withWriter('UTF-8'){
-                            writer ->
-                                fileSpec.writeTo(writer)
-                        }
-                    }
-        }
+mvvmConfig {
+    model {
+        name = "data"
+        subPath = "mysubpath/morenestedpath/"
+    }
+    view {
+        name = "Presentation"
+        subPath = "mysubpath/morenestedpath/"
+    }
+    viewModel {
+        name = "CustomViewModel"
+        subPath = "myViewModel/common/"
     }
 
 }

@@ -1,0 +1,26 @@
+plugins{
+    id 'groovy-gradle-plugin'
+    id 'maven-publish'
+}
+group = 'com.ruviapps'
+version = '1.1-SNAPSHOT'
+dependencies {
+    implementation('com.squareup:kotlinpoet:1.18.1')
+}
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+gradlePlugin {
+    plugins {
+        mvvmPlugin{
+            id = "mvvm"
+            implementationClass = "Mvvm"
+        }
+    }
+}
+publishing {
+    publications {
+
+    }
+}
