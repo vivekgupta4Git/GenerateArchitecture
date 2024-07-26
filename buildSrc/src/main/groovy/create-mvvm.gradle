@@ -21,7 +21,6 @@ abstract class GenerateMvvm extends DefaultTask {
 
     @TaskAction
     void action() {
-        println(project.extensions["mvvmGreeting"].properties["message"].get()) //using map getter
         def projectPath
         def mainSourceSet = project.layout.projectDirectory.dir('src/main')
         def kotlinSourceDir = mainSourceSet.dir("kotlin").asFile
@@ -39,23 +38,6 @@ abstract class GenerateMvvm extends DefaultTask {
         namespaceCollection.each { part ->
             namespace = namespace + "/$part"
         }
-        //println(kotlin.asFile.path + namespace)
-        //  def mainSourceDirectory
-        /*project.android.sourceSets.each {
-            sourceSet ->
-                if(sourceSet.name.startsWith("main")) {
-                    for (File file : sourceSet.java.getSrcDirs())
-                        if (file.exists()) {
-                            def namespaceCollection1 = androidExtension.properties.get("namespace").split('\\.')
-                            def namespace1 = ""
-                            namespaceCollection1.each { part ->
-                                namespace1 = namespace1 + "/$part"
-                            }
-                            mainSourceDirectory = "$file.path" + "${namespace1}"
-                            break
-                        }
-                }
-        } */
         def dirPath
         if (subPath) {
             dirPath = projectPath + namespace + "/${subPath}"
@@ -141,11 +123,11 @@ abstract class MvvmConfigurationExtension {
         action.execute(getModel())
     }
 
-    void view(Action<? super Model> action) {
+    void view(Action<? super View> action) {
         action.execute(getView())
     }
 
-    void viewModel(Action<? super Model> action) {
+    void viewModel(Action<? super ViewModel> action) {
         action.execute(getViewModel())
     }
 }
