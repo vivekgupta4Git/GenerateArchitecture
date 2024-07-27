@@ -9,6 +9,9 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 abstract class GenerateMvvm extends DefaultTask {
+
+    private boolean preferKotlin = true
+
     private String subPath
 
     @Option(option = "subPath", description = """Generates mvvm inside the subpath.
@@ -18,6 +21,12 @@ abstract class GenerateMvvm extends DefaultTask {
         this.subPath = subPath
     }
 
+    @Option(option = "preferKotlin",description = """ This plugin generates code assuming you have kotlin sourceSets
+    but if you have java sourceSets and you want to generate structure in the java sourceSets you can set this flag to false by
+    using option :mvvm  --no-preferKotlin""")
+    void setPreferKotlin(boolean prefer){
+        preferKotlin = prefer
+    }
 
     @TaskAction
     void action() {
@@ -26,10 +35,10 @@ abstract class GenerateMvvm extends DefaultTask {
         def kotlinSourceDir = mainSourceSet.dir("kotlin").asFile
         def javaSourceDir = mainSourceSet.dir("java").asFile
 
-        if (javaSourceDir.exists())
-            projectPath = javaSourceDir.path
-        else
+        if (kotlinSourceDir.exists() && preferKotlin)
             projectPath = kotlinSourceDir.path
+        else
+            projectPath = javaSourceDir.path
 
         def androidExtension = project.extensions.findByName("android")
         //either use findByName or use map getter method
