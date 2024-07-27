@@ -8,6 +8,18 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
+class PluginConstant{
+    public static final String PLUGIN_GROUP = "Architecture Plugin"
+    public static final String PLUGIN_NAME = "mvvm"
+    public static final String M_FOR_MODEL = "model"
+    public static final String EXTENSION_PROPERTY_NAME = "name"
+    public static final String EXTENSION_PROPERTY_SUB_PATH = "subPath"
+    public static final String VM_FOR_VIEW_MODEL = "viewModel"
+    public static final String V_FOR_VIEW = "view"
+    public static final String EXTENSION_NAME = "mvvmConfig"
+}
+
+
 abstract class GenerateMvvm extends DefaultTask {
 
     private boolean preferKotlin = true
@@ -57,24 +69,24 @@ abstract class GenerateMvvm extends DefaultTask {
         if (!dir.exists())
             dir.mkdirs()
 
-        println(project.extensions["mvvmConfig"]
-                .properties["model"]["name"].get()) //using map getter
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.M_FOR_MODEL][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
-        println(project.extensions["mvvmConfig"]
-                .properties["model"]["subPath"].get()) //using map getter
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.M_FOR_MODEL][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
 
-        println(project.extensions["mvvmConfig"]
-                .properties["viewModel"]["name"].get()) //using map getter
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.VM_FOR_VIEW_MODEL][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
-        println(project.extensions["mvvmConfig"]
-                .properties["viewModel"]["subPath"].get()) //using map getter
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.VM_FOR_VIEW_MODEL][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
 
-        println(project.extensions["mvvmConfig"]
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
 
-                .properties["view"]["name"].get()) //using map getter
+                .properties[PluginConstant.V_FOR_VIEW][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
-        println(project.extensions["mvvmConfig"]
-                .properties["view"]["subPath"].get()) //using map getter
+        println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.V_FOR_VIEW][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
 
         def packageName = androidExtension.properties.get("namespace").toString()
         def fileSpec = FileSpec.builder(packageName, "GradleLovesKotlinPoet").build()
@@ -91,31 +103,24 @@ abstract class GenerateMvvm extends DefaultTask {
 abstract class Mvvm implements Plugin<Project> {
     @Override
     void apply(Project project) {
-        def mvvmPluginExtensionDefaultValue = project.extensions.create("mvvmGreeting", MvvmPluginExtension)
-        def mvvmConfiguration = project.extensions.create("mvvmConfig", MvvmConfigurationExtension)
-        project.tasks.register("mvvm", GenerateMvvm.class) {
-            group = "Architecture Plugin"
+        def mvvmConfiguration = project.extensions.create(PluginConstant.EXTENSION_NAME, MvvmConfigurationExtension)
+        project.tasks.register(PluginConstant.PLUGIN_NAME, GenerateMvvm.class) {
+            group = PluginConstant.PLUGIN_GROUP
             description = "Generate directory structure according to Mvvm Architecture"
-            mvvmPluginExtensionDefaultValue.message.convention("Hi from mvvm with Default value !!")
             mvvmConfiguration.model {
-                name.convention("Data")
+                name.convention("data")
                 subPath.convention("")
             }
             mvvmConfiguration.viewModel {
-                name.convention("ViewModel")
+                name.convention("viewModel")
                 subPath.convention("")
             }
             mvvmConfiguration.view {
-                name.convention("Ui")
+                name.convention("ui")
                 subPath.convention("")
             }
         }
     }
-}
-
-
-interface MvvmPluginExtension {
-    Property<String> getMessage()
 }
 
 abstract class MvvmConfigurationExtension {
