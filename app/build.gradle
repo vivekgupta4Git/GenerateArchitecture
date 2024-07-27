@@ -73,7 +73,7 @@ mvvmConfig {
     }
     view {
         name = "Presentation"
-        subPath = "mysubpath/morenestedpath/"
+        subPath = "anothersubpath/morenestedpath/"
     }
     viewModel {
         name = "CustomViewModel"

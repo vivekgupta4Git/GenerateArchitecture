@@ -11,11 +11,11 @@ import org.gradle.api.tasks.options.Option
 class PluginConstant{
     public static final String PLUGIN_GROUP = "Architecture Plugin"
     public static final String PLUGIN_NAME = "mvvm"
-    public static final String M_FOR_MODEL = "model"
+    public static final String M_FOR_MODEL_FIELD = "model"
     public static final String EXTENSION_PROPERTY_NAME = "name"
     public static final String EXTENSION_PROPERTY_SUB_PATH = "subPath"
-    public static final String VM_FOR_VIEW_MODEL = "viewModel"
-    public static final String V_FOR_VIEW = "view"
+    public static final String VM_FOR_VIEWMODEL_FIELD = "viewModel"
+    public static final String V_FOR_VIEW_FIELD = "view"
     public static final String EXTENSION_NAME = "mvvmConfig"
 }
 
@@ -68,25 +68,81 @@ abstract class GenerateMvvm extends DefaultTask {
         def dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
+        createMvvmStructure(dir)
+      /*  println(project.extensions[PluginConstant.EXTENSION_NAME]
+                .properties[PluginConstant.M_FOR_MODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
         println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.M_FOR_MODEL][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
+                .properties[PluginConstant.M_FOR_MODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
 
         println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.M_FOR_MODEL][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
+                .properties[PluginConstant.VM_FOR_VIEWMODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
         println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.VM_FOR_VIEW_MODEL][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
-
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.VM_FOR_VIEW_MODEL][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
+                .properties[PluginConstant.VM_FOR_VIEWMODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
 
         println(project.extensions[PluginConstant.EXTENSION_NAME]
 
-                .properties[PluginConstant.V_FOR_VIEW][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
+                .properties[PluginConstant.V_FOR_VIEW_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
         println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.V_FOR_VIEW][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
+                .properties[PluginConstant.V_FOR_VIEW_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
+*/
+
+
+    }
+    private String getValueForExtensionPropertyNameUsingField(String fieldName){
+
+        return project.extensions[PluginConstant.EXTENSION_NAME]
+                                                     //extension property name
+                .properties[fieldName][PluginConstant.EXTENSION_PROPERTY_NAME].get()
+                            //field can be view,model,viewModel
+    }
+    private String getValueForExtensionPropertySubPathUsingField(String fieldName){
+        return project.extensions[PluginConstant.EXTENSION_NAME]
+                                                    //extension property subPath
+                .properties[fieldName][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()
+                        //field can be view,model,viewModel
+    }
+    private static checkForEmpty(String value){
+        if(value.isEmpty())
+            throw new Throwable("Extension property is not configured properly, Don't pass empty String")
+    }
+    private void createMvvmStructure(File dir){
+        def mName = getValueForExtensionPropertyNameUsingField(PluginConstant.M_FOR_MODEL_FIELD)
+        def vmName = getValueForExtensionPropertyNameUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
+        def vName = getValueForExtensionPropertyNameUsingField(PluginConstant.V_FOR_VIEW_FIELD)
+        checkForEmpty(mName)
+        checkForEmpty(vmName)
+        checkForEmpty(vName)
+        def mSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.M_FOR_MODEL_FIELD)
+        def vSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.V_FOR_VIEW_FIELD)
+        def vmSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
+
+        def mFile = createSubPathIfAvailable(mSubPath,dir,mName)
+        createSourceFile(mFile)
+        def vFile = createSubPathIfAvailable(vSubPath,dir,vName)
+        createSourceFile(vFile)
+        def vmFile = createSubPathIfAvailable(vmSubPath,dir,vmName)
+        createSourceFile(vmFile)
+
+
+    }
+    private static File createSubPathIfAvailable(String path, File dir, String field){
+        def newMSubDirPath
+        if(path.isEmpty())
+            newMSubDirPath = dir.path + "/${field}"
+        else
+            newMSubDirPath = dir.path + "/${path}" + "/${field}"
+
+        File newMSubDir = new File(newMSubDirPath)
+        if(!newMSubDir.exists())
+            newMSubDir.mkdirs()
+
+       return newMSubDir
+    }
+    private createSourceFile(File dir){
+        def androidExtension = project.extensions.findByName("android")
 
         def packageName = androidExtension.properties.get("namespace").toString()
         def fileSpec = FileSpec.builder(packageName, "GradleLovesKotlinPoet").build()
@@ -95,7 +151,6 @@ abstract class GenerateMvvm extends DefaultTask {
             writer ->
                 fileSpec.writeTo(writer)
         }
-
     }
 }
 
