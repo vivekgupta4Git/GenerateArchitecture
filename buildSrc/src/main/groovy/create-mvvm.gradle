@@ -69,28 +69,29 @@ abstract class GenerateMvvm extends DefaultTask {
         if (!dir.exists())
             dir.mkdirs()
         createMvvmStructure(dir)
-      /*  println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.M_FOR_MODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
 
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.M_FOR_MODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
+    }
+    private void createMvvmStructure(File dir){
+        def mName = getValueForExtensionPropertyNameUsingField(PluginConstant.M_FOR_MODEL_FIELD)
+        def vmName = getValueForExtensionPropertyNameUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
+        def vName = getValueForExtensionPropertyNameUsingField(PluginConstant.V_FOR_VIEW_FIELD)
+        checkForEmpty(mName)
+        checkForEmpty(vmName)
+        checkForEmpty(vName)
+        def mSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.M_FOR_MODEL_FIELD)
+        def vSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.V_FOR_VIEW_FIELD)
+        def vmSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
 
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.VM_FOR_VIEWMODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
-
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.VM_FOR_VIEWMODEL_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
-
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-
-                .properties[PluginConstant.V_FOR_VIEW_FIELD][PluginConstant.EXTENSION_PROPERTY_NAME].get()) //using map getter
-
-        println(project.extensions[PluginConstant.EXTENSION_NAME]
-                .properties[PluginConstant.V_FOR_VIEW_FIELD][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()) //using map getter
-*/
+        def mFile = createSubPathIfAvailable(mSubPath,dir,mName)
+        createSourceFile(mFile,mName,mSubPath)
+        def vFile = createSubPathIfAvailable(vSubPath,dir,vName)
+        createSourceFile(vFile,vName,vSubPath)
+        def vmFile = createSubPathIfAvailable(vmSubPath,dir,vmName)
+        createSourceFile(vmFile,vmName,vmSubPath)
 
 
     }
+
     private String getValueForExtensionPropertyNameUsingField(String fieldName){
 
         return project.extensions[PluginConstant.EXTENSION_NAME]
@@ -108,26 +109,6 @@ abstract class GenerateMvvm extends DefaultTask {
         if(value.isEmpty())
             throw new Throwable("Extension property is not configured properly, Don't pass empty String")
     }
-    private void createMvvmStructure(File dir){
-        def mName = getValueForExtensionPropertyNameUsingField(PluginConstant.M_FOR_MODEL_FIELD)
-        def vmName = getValueForExtensionPropertyNameUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
-        def vName = getValueForExtensionPropertyNameUsingField(PluginConstant.V_FOR_VIEW_FIELD)
-        checkForEmpty(mName)
-        checkForEmpty(vmName)
-        checkForEmpty(vName)
-        def mSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.M_FOR_MODEL_FIELD)
-        def vSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.V_FOR_VIEW_FIELD)
-        def vmSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
-
-        def mFile = createSubPathIfAvailable(mSubPath,dir,mName)
-        createSourceFile(mFile)
-        def vFile = createSubPathIfAvailable(vSubPath,dir,vName)
-        createSourceFile(vFile)
-        def vmFile = createSubPathIfAvailable(vmSubPath,dir,vmName)
-        createSourceFile(vmFile)
-
-
-    }
     private static File createSubPathIfAvailable(String path, File dir, String field){
         def newMSubDirPath
         if(path.isEmpty())
@@ -135,23 +116,46 @@ abstract class GenerateMvvm extends DefaultTask {
         else
             newMSubDirPath = dir.path + "/${path}" + "/${field}"
 
-        File newMSubDir = new File(newMSubDirPath)
+        File newMSubDir = new File(newMSubDirPath.toLowerCase())
         if(!newMSubDir.exists())
             newMSubDir.mkdirs()
 
        return newMSubDir
     }
-    private createSourceFile(File dir){
+    private createSourceFile(File dir,String extensionName, String subPath){
         def androidExtension = project.extensions.findByName("android")
-
         def packageName = androidExtension.properties.get("namespace").toString()
-        def fileSpec = FileSpec.builder(packageName, "GradleLovesKotlinPoet").build()
+
+        String modifiedPackageName
+        if(subPath.isBlank())
+            modifiedPackageName = packageName + ".${extensionName}"
+        else
+            {
+                String newSubPath = ""
+                def collection = subPath.split('/')
+                println(collection)
+                if(collection.size() == 0)
+                    modifiedPackageName = packageName + ".${subPath}" + ".${extensionName}"
+                else
+                    {
+                        collection.each {
+                            newSubPath = newSubPath + "." + it
+
+                        }
+                        modifiedPackageName = packageName + "${newSubPath}"+  ".${extensionName}"
+                    }
+            }
+        println(modifiedPackageName.toLowerCase())
+        def fileSpec = FileSpec.builder(modifiedPackageName.toLowerCase(), "GradleLovesKotlinPoet").build()
         def kotlinFile = new File(dir, "GradleLovesKotlinPoet.kt")
         kotlinFile.withWriter('UTF-8') {
             writer ->
                 fileSpec.writeTo(writer)
         }
     }
+
+    
+
 }
 
 
@@ -167,7 +171,7 @@ abstract class Mvvm implements Plugin<Project> {
                 subPath.convention("")
             }
             mvvmConfiguration.viewModel {
-                name.convention("viewModel")
+                name.convention("viewmodel")
                 subPath.convention("")
             }
             mvvmConfiguration.view {

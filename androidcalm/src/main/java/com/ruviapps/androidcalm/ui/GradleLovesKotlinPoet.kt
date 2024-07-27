@@ -1,2 +1,2 @@
-package com.ruviapps.androidcalm
+package com.ruviapps.androidcalm.ui
 

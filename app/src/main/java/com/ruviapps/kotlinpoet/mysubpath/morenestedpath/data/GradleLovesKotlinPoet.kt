@@ -1,2 +1,2 @@
-package com.ruviapps.kotlinpoet
+package com.ruviapps.kotlinpoet.mysubpath.morenestedpath.`data`
 
