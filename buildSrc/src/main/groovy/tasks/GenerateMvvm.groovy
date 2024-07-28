@@ -45,7 +45,7 @@ abstract class GenerateMvvm extends DefaultTask {
             namespace = namespace + "/$part"
         }
         def dirPath
-        if (!subPath.isEmpty()) {
+        if (subPath != null && subPath != "") {
             dirPath = projectPath + namespace + "/${subPath}"
         } else
             dirPath = projectPath + namespace
@@ -111,7 +111,7 @@ abstract class GenerateMvvm extends DefaultTask {
         def androidExtension = project.extensions.findByName("android")
         def androidPackage = androidExtension.properties.get("namespace").toString()
         def packageName
-        if(mvvmSubPath.isBlank())
+        if(mvvmSubPath == null || mvvmSubPath == "")
         {
             packageName = androidPackage
         }else
@@ -131,7 +131,7 @@ abstract class GenerateMvvm extends DefaultTask {
         }
         println(packageName)
         String modifiedPackageName
-        if(subPath.isBlank())
+        if(subPath == null || subPath.isBlank() || subPath == "")
             modifiedPackageName = packageName + ".${extensionName}"
         else
             {

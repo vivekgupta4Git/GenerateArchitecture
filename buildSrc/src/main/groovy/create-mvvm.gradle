@@ -23,6 +23,7 @@ abstract class Mvvm implements Plugin<Project> {
                 subPath.convention("")
             }
         }
+
     }
 }
 
