@@ -68,16 +68,13 @@ dependencies {
 }
 mvvmConfig {
     model {
-        name = "data"
-        subPath = "mysubpath/morenestedpath/"
+        name = "model"
     }
     view {
-        name = "Presentation"
-        subPath = "anothersubpath/morenestedpath/"
+        name = "view"
     }
     viewModel {
-        name = "CustomViewModel"
-        subPath = "myViewModel/common/"
+        name = "viewmodel"
     }
 
 }

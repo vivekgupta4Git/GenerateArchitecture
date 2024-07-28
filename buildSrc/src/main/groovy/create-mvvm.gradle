@@ -1,163 +1,7 @@
-import com.squareup.kotlinpoet.FileSpec
-import org.gradle.api.Action
-import org.gradle.api.DefaultTask
+import extension.MvvmConfigurationExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.options.Option
-
-class PluginConstant{
-    public static final String PLUGIN_GROUP = "Architecture Plugin"
-    public static final String PLUGIN_NAME = "mvvm"
-    public static final String M_FOR_MODEL_FIELD = "model"
-    public static final String EXTENSION_PROPERTY_NAME = "name"
-    public static final String EXTENSION_PROPERTY_SUB_PATH = "subPath"
-    public static final String VM_FOR_VIEWMODEL_FIELD = "viewModel"
-    public static final String V_FOR_VIEW_FIELD = "view"
-    public static final String EXTENSION_NAME = "mvvmConfig"
-}
-
-
-abstract class GenerateMvvm extends DefaultTask {
-
-    private boolean preferKotlin = true
-
-    private String subPath
-
-    @Option(option = "subPath", description = """Generates mvvm inside the subpath.
-    Mvvm generates stuffs under main source directory + package name; 
-    so if subPath is given then mainSourceDirectory/packageName/subPath""")
-    void setSubPath(String subPath) {
-        this.subPath = subPath
-    }
-
-    @Option(option = "preferKotlin",description = """ This plugin generates code assuming you have kotlin sourceSets
-    but if you have java sourceSets and you want to generate structure in the java sourceSets you can set this flag to false by
-    using option :mvvm  --no-preferKotlin""")
-    void setPreferKotlin(boolean prefer){
-        preferKotlin = prefer
-    }
-
-    @TaskAction
-    void action() {
-        def projectPath
-        def mainSourceSet = project.layout.projectDirectory.dir('src/main')
-        def kotlinSourceDir = mainSourceSet.dir("kotlin").asFile
-        def javaSourceDir = mainSourceSet.dir("java").asFile
-
-        if (kotlinSourceDir.exists() && preferKotlin)
-            projectPath = kotlinSourceDir.path
-        else
-            projectPath = javaSourceDir.path
-
-        def androidExtension = project.extensions.findByName("android")
-        //either use findByName or use map getter method
-        def namespaceCollection = androidExtension.properties.get("namespace").split('\\.')
-        def namespace = ""
-        namespaceCollection.each { part ->
-            namespace = namespace + "/$part"
-        }
-        def dirPath
-        if (subPath) {
-            dirPath = projectPath + namespace + "/${subPath}"
-        } else
-            dirPath = projectPath + namespace
-
-        def dir = new File(dirPath)
-        if (!dir.exists())
-            dir.mkdirs()
-        createMvvmStructure(dir)
-
-    }
-    private void createMvvmStructure(File dir){
-        def mName = getValueForExtensionPropertyNameUsingField(PluginConstant.M_FOR_MODEL_FIELD)
-        def vmName = getValueForExtensionPropertyNameUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
-        def vName = getValueForExtensionPropertyNameUsingField(PluginConstant.V_FOR_VIEW_FIELD)
-        checkForEmpty(mName)
-        checkForEmpty(vmName)
-        checkForEmpty(vName)
-        def mSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.M_FOR_MODEL_FIELD)
-        def vSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.V_FOR_VIEW_FIELD)
-        def vmSubPath = getValueForExtensionPropertySubPathUsingField(PluginConstant.VM_FOR_VIEWMODEL_FIELD)
-
-        def mFile = createSubPathIfAvailable(mSubPath,dir,mName)
-        createSourceFile(mFile,mName,mSubPath)
-        def vFile = createSubPathIfAvailable(vSubPath,dir,vName)
-        createSourceFile(vFile,vName,vSubPath)
-        def vmFile = createSubPathIfAvailable(vmSubPath,dir,vmName)
-        createSourceFile(vmFile,vmName,vmSubPath)
-
-
-    }
-
-    private String getValueForExtensionPropertyNameUsingField(String fieldName){
-
-        return project.extensions[PluginConstant.EXTENSION_NAME]
-                                                     //extension property name
-                .properties[fieldName][PluginConstant.EXTENSION_PROPERTY_NAME].get()
-                            //field can be view,model,viewModel
-    }
-    private String getValueForExtensionPropertySubPathUsingField(String fieldName){
-        return project.extensions[PluginConstant.EXTENSION_NAME]
-                                                    //extension property subPath
-                .properties[fieldName][PluginConstant.EXTENSION_PROPERTY_SUB_PATH].get()
-                        //field can be view,model,viewModel
-    }
-    private static checkForEmpty(String value){
-        if(value.isEmpty())
-            throw new Throwable("Extension property is not configured properly, Don't pass empty String")
-    }
-    private static File createSubPathIfAvailable(String path, File dir, String field){
-        def newMSubDirPath
-        if(path.isEmpty())
-            newMSubDirPath = dir.path + "/${field}"
-        else
-            newMSubDirPath = dir.path + "/${path}" + "/${field}"
-
-        File newMSubDir = new File(newMSubDirPath.toLowerCase())
-        if(!newMSubDir.exists())
-            newMSubDir.mkdirs()
-
-       return newMSubDir
-    }
-    private createSourceFile(File dir,String extensionName, String subPath){
-        def androidExtension = project.extensions.findByName("android")
-        def packageName = androidExtension.properties.get("namespace").toString()
-
-        String modifiedPackageName
-        if(subPath.isBlank())
-            modifiedPackageName = packageName + ".${extensionName}"
-        else
-            {
-                String newSubPath = ""
-                def collection = subPath.split('/')
-                println(collection)
-                if(collection.size() == 0)
-                    modifiedPackageName = packageName + ".${subPath}" + ".${extensionName}"
-                else
-                    {
-                        collection.each {
-                            newSubPath = newSubPath + "." + it
-
-                        }
-                        modifiedPackageName = packageName + "${newSubPath}"+  ".${extensionName}"
-                    }
-            }
-        println(modifiedPackageName.toLowerCase())
-        def fileSpec = FileSpec.builder(modifiedPackageName.toLowerCase(), "GradleLovesKotlinPoet").build()
-        def kotlinFile = new File(dir, "GradleLovesKotlinPoet.kt")
-        kotlinFile.withWriter('UTF-8') {
-            writer ->
-                fileSpec.writeTo(writer)
-        }
-    }
-
-    
-
-}
-
+import tasks.GenerateMvvm
 
 abstract class Mvvm implements Plugin<Project> {
     @Override
@@ -167,7 +11,7 @@ abstract class Mvvm implements Plugin<Project> {
             group = PluginConstant.PLUGIN_GROUP
             description = "Generate directory structure according to Mvvm Architecture"
             mvvmConfiguration.model {
-                name.convention("data")
+                name.convention("model")
                 subPath.convention("")
             }
             mvvmConfiguration.viewModel {
@@ -175,51 +19,13 @@ abstract class Mvvm implements Plugin<Project> {
                 subPath.convention("")
             }
             mvvmConfiguration.view {
-                name.convention("ui")
+                name.convention("view")
                 subPath.convention("")
             }
         }
     }
 }
 
-abstract class MvvmConfigurationExtension {
-    @Nested
-    abstract Model getModel();
-
-    @Nested
-    abstract ViewModel getViewModel();
-
-    @Nested
-    abstract View getView()
-
-    void model(Action<? super Model> action) {
-        action.execute(getModel())
-    }
-
-    void view(Action<? super View> action) {
-        action.execute(getView())
-    }
-
-    void viewModel(Action<? super ViewModel> action) {
-        action.execute(getViewModel())
-    }
-}
 
 
-abstract class Model {
-    abstract Property<String> getName()
 
-    abstract Property<String> getSubPath()
-}
-
-abstract class View {
-    abstract Property<String> getName()
-
-    abstract Property<String> getSubPath()
-}
-
-abstract class ViewModel {
-    abstract Property<String> getName()
-
-    abstract Property<String> getSubPath()
-}
