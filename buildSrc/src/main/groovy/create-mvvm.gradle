@@ -7,7 +7,7 @@ abstract class Mvvm implements Plugin<Project> {
     @Override
     void apply(Project project) {
         def mvvmConfiguration = project.extensions.create(PluginConstant.EXTENSION_NAME, MvvmConfigurationExtension)
-        project.tasks.register(PluginConstant.PLUGIN_NAME, GenerateMvvm.class) {
+        project.tasks.register(PluginConstant.PLUGIN_NAME,GenerateMvvm.class) {
             group = PluginConstant.PLUGIN_GROUP
             description = "Generate directory structure according to Mvvm Architecture"
             mvvmConfiguration.model {

@@ -1,6 +1,9 @@
 package tasks
 
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
@@ -129,7 +132,6 @@ abstract class GenerateMvvm extends DefaultTask {
             }
             packageName = androidPackage + "${separatedMvvmSubPath.trim()}"
         }
-        println(packageName)
         String modifiedPackageName
         if(subPath == null || subPath.isBlank() || subPath == "")
             modifiedPackageName = packageName + ".${extensionName}"
@@ -148,14 +150,38 @@ abstract class GenerateMvvm extends DefaultTask {
                         modifiedPackageName = packageName + "${separatedSubPath.trim()}"+  ".${extensionName}"
                     }
             }
-        def fileSpec = FileSpec.builder(modifiedPackageName.toLowerCase(), "GradleLovesKotlinPoet").build()
+        writeModelClass(dir,modifiedPackageName)
+       /* def fileSpec = FileSpec.builder(modifiedPackageName.toLowerCase(), "GradleLovesKotlinPoet").build()
         def kotlinFile = new File(dir, "GradleLovesKotlinPoet.kt")
+        kotlinFile.withWriter('UTF-8') {
+            writer ->
+                fileSpec.writeTo(writer)
+        }*/
+    }
+
+    private static void writeModelClass(File dir, String packageName){
+        def fileSpec = FileSpec.builder(packageName.toLowerCase(), "ModelClass")
+                .addType(
+                        TypeSpec.classBuilder("Model")
+                                .primaryConstructor(
+                                        FunSpec.constructorBuilder()
+                                                .addParameter("name", )
+                                                .build()
+                                )
+                                .addProperty(
+                                        PropertySpec.builder("name", String.class)
+                                                .initializer("name")
+                                                .build()
+                                )
+                                .build()
+                )
+                .build()
+        def kotlinFile = new File(dir, "ModelClass.kt")
         kotlinFile.withWriter('UTF-8') {
             writer ->
                 fileSpec.writeTo(writer)
         }
     }
-
 
 
 }
