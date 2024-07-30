@@ -2,6 +2,6 @@ package com.ruviapps.kotlinpoet.view
 
 import java.lang.String
 
-public class Greeter(
+public class Model(
   public val name: String,
 )

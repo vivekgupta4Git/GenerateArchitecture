@@ -165,7 +165,7 @@ abstract class GenerateMvvm extends DefaultTask {
                         TypeSpec.classBuilder("Model")
                                 .primaryConstructor(
                                         FunSpec.constructorBuilder()
-                                                .addParameter("name", )
+                                                .addParameter("name",String.class )
                                                 .build()
                                 )
                                 .addProperty(

@@ -1,16 +1,21 @@
 pluginManagement {
     repositories {
-        mavenLocal()
+     //   mavenLocal()
         google()
         mavenCentral()
         gradlePluginPortal()
     }
+    //includeBuildfile("../kotlinpoet/architecture-plugins")
+    includeBuild(file('../kotlinpoet/architecture-plugins').toPath().toRealPath().toAbsolutePath().toString())
+
+
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
