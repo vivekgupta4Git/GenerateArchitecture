@@ -1,3 +1,3 @@
 package architecture
 
-abstract class ViewModel : ArchitectureBase()
+abstract class ViewModel : ArchitectureProperties()

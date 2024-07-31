@@ -2,6 +2,10 @@ package tasks
 
 import MvvmPluginConstant
 import architecture.AndroidExtension
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
 import extension.MvvmConfigurationExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -45,7 +49,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         if (!mainSourceSet.asFile.exists())
             throw Throwable("This plugin requires mainSourceSet (src/main)")
 
-        val projectPath = if (mainSourceSet.dir("kotlin").asFile.exists())
+        val projectPath = if (mainSourceSet.dir("kotlin").asFile.exists() && useKotlin)
             mainSourceSet.dir("kotlin").asFile.path
         else
             mainSourceSet.dir("java").asFile.path
@@ -61,27 +65,27 @@ abstract class CreateSourceDirectory : DefaultTask() {
         if (!file.exists())
             file.mkdirs()
 
-        println(file.path)
         val extension = getExtension()
         val modelExtension = extension.model
         val modelFile =
-            createSubPathIfAvailable(modelExtension.subPath.get(), file, modelExtension.name.get())
+            createInsideDirectoryIfAvailable(modelExtension.insideDirectory.get(), file, modelExtension.name.get())
+        println("Model file = ${modelFile.path}")
 
-      /*  createModelFile(
-            modelFile,
+        createModelFile(
+            File(projectPath),
             modelExtension.name.get(),
-            modelExtension.subPath.get(),
+            modelExtension.insideDirectory.get(),
             mvvmSubPath
-        )*/
+        )
 
 
         val viewExtension = extension.view
         val viewFile =
-            createSubPathIfAvailable(viewExtension.subPath.get(), file, viewExtension.name.get())
+            createInsideDirectoryIfAvailable(viewExtension.insideDirectory.get(), file, viewExtension.name.get())
 
-        val viewModelExtension = extension.view
-        val viewModelFile = createSubPathIfAvailable(
-            viewModelExtension.subPath.get(),
+        val viewModelExtension = extension.viewModel
+        val viewModelFile = createInsideDirectoryIfAvailable(
+            viewModelExtension.insideDirectory.get(),
             file,
             viewModelExtension.name.get()
         )
@@ -94,13 +98,16 @@ abstract class CreateSourceDirectory : DefaultTask() {
         mvvmSubPath: String
     ) {
         val packageName = mvvmSubPath.getPackageName()
+        println("package Name = $packageName")
         val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
-       // writeModelClass(dir, modifiedPackage)
+        println("modified Package = $modifiedPackage")
+        println("director = ${dir.path}")
+        writeModelClass(dir, modifiedPackage)
 
     }
 
-/*    private fun writeModelClass(dir: File, packageName: String) {
-        val fileSpec = FileSpec.builder(packageName.lowercase(), "ModelClass")
+    private fun writeModelClass(dir: File, packageName: String) {
+        val fileSpec = FileSpec.builder(packageName, "ModelClass")
             .addType(
                 TypeSpec.classBuilder("Model")
                     .primaryConstructor(
@@ -116,11 +123,19 @@ abstract class CreateSourceDirectory : DefaultTask() {
                     .build()
             )
             .build()
+        fileSpec.writeTo(dir)
+        /*
+             def kotlinFile = new File(dir, "ModelClass.kt")
+        kotlinFile.withWriter('UTF-8') {
+            writer ->
+                fileSpec.writeTo(writer)
+        }
+         */
+      //  val file = File(dir, "ModelClass.kt")
+      //  val outStream = file.writer(Charset.forName("UTF-8"))
+      //  fileSpec.writeTo(outStream)
 
-        val kotlinFile = File(dir, "ModelClass.kt")
-        fileSpec.writeTo(kotlinFile)
-
-    }*/
+    }
 
 
     private fun String.modifyPackageName(pkg: String?, ext: String): String {
@@ -135,7 +150,10 @@ abstract class CreateSourceDirectory : DefaultTask() {
             collection.forEach {
                 separatedSubPath = "$separatedSubPath.$it"
             }
-            pkg + separatedSubPath.trim() + ext
+            if (pkg != null)
+                pkg + ".${separatedSubPath.trim()}" + ".$ext"
+            else
+                 ".${separatedSubPath.trim()}" + ".$ext"
         }
 
     }
@@ -165,10 +183,12 @@ abstract class CreateSourceDirectory : DefaultTask() {
         return extension
     }
 
-    private fun createSubPathIfAvailable(path: String, dir: File, field: String): File {
-        val newPath = if (path.isEmpty()) "${dir.path}/${field.lowercase()}" else "${dir.path}/${
-            path.lowercase().replace('.', '/')
-        }/${field.lowercase()}"
+    private fun createInsideDirectoryIfAvailable(path: String, dir: File, field: String): File {
+        val newPath = if (path.isEmpty())
+            "${dir.path}/${field.lowercase()}"
+        else
+            "${dir.path}/${path.lowercase().replace('.', '/')}/${field.lowercase()}"
+
         val fileWithNewPath = File(newPath)
         if (!fileWithNewPath.exists())
             fileWithNewPath.mkdirs()

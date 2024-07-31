@@ -1,2 +1,2 @@
 package architecture
-abstract class View : ArchitectureBase()
+abstract class View : ArchitectureProperties()

@@ -68,11 +68,12 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
 configureMvvm {
-    model {
-        name = "data"
-        subPath = ""
+    view{
+        name = "ui"
+        insideDirectory = "asthmaui"
     }
 }
+
 /*
 mvvmConfig {
     model {

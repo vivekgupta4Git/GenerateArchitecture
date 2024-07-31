@@ -1,2 +1,2 @@
 package architecture
-abstract class Model : ArchitectureBase()
+abstract class Model : ArchitectureProperties()

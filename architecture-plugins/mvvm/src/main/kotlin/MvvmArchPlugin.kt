@@ -22,15 +22,15 @@ fun Project.registerTaskCreateSourceDirectory() : TaskProvider<CreateSourceDirec
         description = MvvmPluginConstant.TASK_CREATE_DIRECTORY_DESCRIPTION
         mvvmConfigurationExtension.model{
             name.convention("model")
-            subPath.convention("")
+            insideDirectory.convention("")
         }
         mvvmConfigurationExtension.viewModel {
             name.convention("viewmodel")
-            subPath.convention("")
+            insideDirectory.convention("")
         }
         mvvmConfigurationExtension.view {
             name.convention("view")
-            subPath.convention("")
+            insideDirectory.convention("")
         }
     }
 }
