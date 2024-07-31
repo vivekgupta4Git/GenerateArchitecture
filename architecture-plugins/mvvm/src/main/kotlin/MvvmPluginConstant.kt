@@ -12,4 +12,5 @@ object MvvmPluginConstant {
     const val EXTENSION_NAME = "configureMvvm"
     const val TASK_CREATE_DIRECTORY = "createSourceDirectory"
     const val TASK_CREATE_DIRECTORY_DESCRIPTION = "Generate directory structure according to Mvvm Architecture"
+
 }
