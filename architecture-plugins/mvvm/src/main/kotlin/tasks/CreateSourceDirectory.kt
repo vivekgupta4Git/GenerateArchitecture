@@ -13,6 +13,7 @@ import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.getByType
 import java.io.File
+import java.util.Locale
 
 
 /**
@@ -54,22 +55,22 @@ abstract class CreateSourceDirectory : DefaultTask() {
         else
             mainSourceSet.dir("java").asFile.path
 
-        val nameSpace = androidExtension.namespace?.replace('.', '/')
-        val finalMvvmPath = if (mvvmSubPath.isNotBlank())
-            "$projectPath/$nameSpace/$mvvmSubPath"
-        else
-            "$projectPath/$nameSpace"
+      //  val nameSpace = androidExtension.namespace?.replace('.', '/')
+     //   val finalMvvmPath = if (mvvmSubPath.isNotBlank())
+     //       "$projectPath/$nameSpace/$mvvmSubPath"
+     //   else
+     //       "$projectPath/$nameSpace"
 
-        val file = File(finalMvvmPath)
+       // val file = File(finalMvvmPath)
 
-        if (!file.exists())
-            file.mkdirs()
+      //  if (!file.exists())
+        //    file.mkdirs()
 
         val extension = getExtension()
         val modelExtension = extension.model
-        val modelFile =
-            createInsideDirectoryIfAvailable(modelExtension.insideDirectory.get(), file, modelExtension.name.get())
-        println("Model file = ${modelFile.path}")
+      //  val modelFile =
+      //      createInsideDirectoryIfAvailable(modelExtension.insideDirectory.get(), file, modelExtension.name.get())
+      //  println("Model file = ${modelFile.path}")
 
         createModelFile(
             File(projectPath),
@@ -80,14 +81,25 @@ abstract class CreateSourceDirectory : DefaultTask() {
 
 
         val viewExtension = extension.view
-        val viewFile =
-            createInsideDirectoryIfAvailable(viewExtension.insideDirectory.get(), file, viewExtension.name.get())
-
+      //  val viewFile =
+      //      createInsideDirectoryIfAvailable(viewExtension.insideDirectory.get(), file, viewExtension.name.get())
+        createModelFile(
+            File(projectPath),
+            viewExtension.name.get(),
+            viewExtension.insideDirectory.get(),
+            mvvmSubPath
+        )
         val viewModelExtension = extension.viewModel
-        val viewModelFile = createInsideDirectoryIfAvailable(
+      //  val viewModelFile = createInsideDirectoryIfAvailable(
+     //       viewModelExtension.insideDirectory.get(),
+     //       file,
+      //      viewModelExtension.name.get()
+       // )
+        createModelFile(
+            File(projectPath),
+            viewModelExtension.name.get(),
             viewModelExtension.insideDirectory.get(),
-            file,
-            viewModelExtension.name.get()
+            mvvmSubPath
         )
     }
 
@@ -102,14 +114,20 @@ abstract class CreateSourceDirectory : DefaultTask() {
         val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
         println("modified Package = $modifiedPackage")
         println("director = ${dir.path}")
-        writeModelClass(dir, modifiedPackage)
+        writeModelClass(dir, modifiedPackage,extensionName)
 
     }
 
-    private fun writeModelClass(dir: File, packageName: String) {
-        val fileSpec = FileSpec.builder(packageName, "ModelClass")
+    private fun writeModelClass(dir: File, packageName: String,ext: String) {
+        val className = "${ext.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(
+                Locale.ROOT
+            ) else it.toString()
+        }}Class"
+
+        val fileSpec = FileSpec.builder(packageName, "${className}File")
             .addType(
-                TypeSpec.classBuilder("Model")
+                TypeSpec.classBuilder(className)
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
                             .addParameter("name", String::class)
@@ -164,7 +182,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
             androidExtension.namespace
         else {
             var separatedMvvmSubPath = ""
-            val collection = this.split('/')
+            val collection = this.lowercase().replace('.','/').split('/')
             collection.forEach {
                 separatedMvvmSubPath = "$separatedMvvmSubPath.$it"
             }
@@ -190,8 +208,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
             "${dir.path}/${path.lowercase().replace('.', '/')}/${field.lowercase()}"
 
         val fileWithNewPath = File(newPath)
-        if (!fileWithNewPath.exists())
-            fileWithNewPath.mkdirs()
+   //     if (!fileWithNewPath.exists())
+     //       fileWithNewPath.mkdirs()
 
         return fileWithNewPath
     }
