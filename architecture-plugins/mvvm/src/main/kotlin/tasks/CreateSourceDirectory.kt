@@ -157,21 +157,23 @@ abstract class CreateSourceDirectory : DefaultTask() {
 
 
     private fun String.modifyPackageName(pkg: String?, ext: String): String {
+      val extName = ".${ext.replaceFirstChar { it.lowercase() }}"
+
         return if (this.isEmpty())
             if (pkg != null)
-                pkg + ".${ext}"
+                pkg + extName
             else
-                ".$ext"
+                extName
         else {
             var separatedSubPath = ""
             val collection = this.split('/')
             collection.forEach {
-                separatedSubPath = "$separatedSubPath.$it"
+                separatedSubPath = "$separatedSubPath.${it.replaceFirstChar { c -> c.lowercase() }}"
             }
             if (pkg != null)
-                pkg + ".${separatedSubPath.trim()}" + ".$ext"
+                pkg + ".${separatedSubPath.trim()}" + extName
             else
-                 ".${separatedSubPath.trim()}" + ".$ext"
+                 ".${separatedSubPath.trim()}" + extName
         }
 
     }
@@ -182,9 +184,9 @@ abstract class CreateSourceDirectory : DefaultTask() {
             androidExtension.namespace
         else {
             var separatedMvvmSubPath = ""
-            val collection = this.lowercase().replace('.','/').split('/')
+            val collection = this.replace('.','/').split('/')
             collection.forEach {
-                separatedMvvmSubPath = "$separatedMvvmSubPath.$it"
+                separatedMvvmSubPath = "$separatedMvvmSubPath.${it.replaceFirstChar { char -> char.lowercase() }}"
             }
 
             androidExtension.namespace + separatedMvvmSubPath.trim()

@@ -69,8 +69,13 @@ dependencies {
 }
 configureMvvm {
     view{
-        name = "ui"
-        insideDirectory = "asthmaui"
+        name = "Ui"
+    }
+    model{
+        name = "Data"
+    }
+    viewModel{
+        name = "viewModels"
     }
 }
 

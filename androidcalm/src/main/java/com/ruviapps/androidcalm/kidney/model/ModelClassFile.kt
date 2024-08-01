@@ -1,4 +1,4 @@
-package com.ruviapps.kotlinpoet.kidney.model
+package com.ruviapps.androidcalm.kidney.model
 
 import kotlin.String
 

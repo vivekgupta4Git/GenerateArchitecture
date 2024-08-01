@@ -25,7 +25,7 @@ fun Project.registerTaskCreateSourceDirectory() : TaskProvider<CreateSourceDirec
             insideDirectory.convention("")
         }
         mvvmConfigurationExtension.viewModel {
-            name.convention("viewmodel")
+            name.convention("viewModel")
             insideDirectory.convention("")
         }
         mvvmConfigurationExtension.view {
