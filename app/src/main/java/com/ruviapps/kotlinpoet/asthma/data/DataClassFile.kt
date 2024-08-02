@@ -1,4 +1,4 @@
-package com.ruviapps.kotlinpoet.kidney.`data`
+package com.ruviapps.kotlinpoet.asthma.`data`
 
 import kotlin.String
 

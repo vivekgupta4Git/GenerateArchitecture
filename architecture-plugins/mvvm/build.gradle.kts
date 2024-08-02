@@ -4,6 +4,7 @@ plugins{
 group = "com.ruviapps"
 version = "1.0.0"
 dependencies{
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
     implementation("com.android.tools.build:gradle:8.0.2")
     implementation("com.squareup:kotlinpoet:1.15.0")

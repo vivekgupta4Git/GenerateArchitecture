@@ -1,4 +1,4 @@
-package com.ruviapps.kotlinpoet.kidney.viewModels
+package com.ruviapps.kotlinpoet.asthma.viewModels
 
 import kotlin.String
 

@@ -1,4 +1,4 @@
-package com.ruviapps.kotlinpoet.kidney.ui
+package com.ruviapps.kotlinpoet.asthma.ui
 
 import kotlin.String
 

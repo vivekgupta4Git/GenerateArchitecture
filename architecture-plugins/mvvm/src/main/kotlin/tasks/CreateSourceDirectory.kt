@@ -2,16 +2,23 @@ package tasks
 
 import MvvmPluginConstant
 import architecture.AndroidExtension
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import extension.MvvmConfigurationExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.getByType
+import retrofit2.Response
+import retrofit2.http.GET
 import java.io.File
 import java.util.Locale
 
@@ -78,6 +85,12 @@ abstract class CreateSourceDirectory : DefaultTask() {
             modelExtension.insideDirectory.get(),
             mvvmSubPath
         )
+        createInterfaceFile(
+            File(projectPath),
+            modelExtension.name.get(),
+            modelExtension.insideDirectory.get(),
+            mvvmSubPath
+        )
 
 
         val viewExtension = extension.view
@@ -103,6 +116,22 @@ abstract class CreateSourceDirectory : DefaultTask() {
         )
     }
 
+    private fun createInterfaceFile(
+        dir: File,
+        extensionName: String,
+        subPath: String,
+        mvvmSubPath: String
+    ) {
+        val packageName = mvvmSubPath.getPackageName()
+        val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
+        writeRestApiInterface(dir,
+            modifiedPackage,
+            subModule = "asthma",
+            modifiedPackage,
+            "${extensionName.capitalizeFirstChar()}Class")
+
+    }
+
     private fun createModelFile(
         dir: File,
         extensionName: String,
@@ -110,20 +139,13 @@ abstract class CreateSourceDirectory : DefaultTask() {
         mvvmSubPath: String
     ) {
         val packageName = mvvmSubPath.getPackageName()
-        println("package Name = $packageName")
         val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
-        println("modified Package = $modifiedPackage")
-        println("director = ${dir.path}")
         writeModelClass(dir, modifiedPackage,extensionName)
 
     }
 
     private fun writeModelClass(dir: File, packageName: String,ext: String) {
-        val className = "${ext.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(
-                Locale.ROOT
-            ) else it.toString()
-        }}Class"
+        val className = "${ext.capitalizeFirstChar()}Class"
 
         val fileSpec = FileSpec.builder(packageName, "${className}File")
             .addType(
@@ -159,8 +181,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
     private fun String.modifyPackageName(pkg: String?, ext: String): String {
       val extName = ".${ext.replaceFirstChar { it.lowercase() }}"
 
-        return if (this.isEmpty())
-            if (pkg != null)
+        if (this.isEmpty())
+            return if (pkg != null)
                 pkg + extName
             else
                 extName
@@ -168,12 +190,12 @@ abstract class CreateSourceDirectory : DefaultTask() {
             var separatedSubPath = ""
             val collection = this.split('/')
             collection.forEach {
-                separatedSubPath = "$separatedSubPath.${it.replaceFirstChar { c -> c.lowercase() }}"
+                separatedSubPath = "$separatedSubPath.${it.lowerFirstChar()}"
             }
-            if (pkg != null)
+            return if (pkg != null)
                 pkg + ".${separatedSubPath.trim()}" + extName
             else
-                 ".${separatedSubPath.trim()}" + extName
+                ".${separatedSubPath.trim()}" + extName
         }
 
     }
@@ -186,7 +208,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
             var separatedMvvmSubPath = ""
             val collection = this.replace('.','/').split('/')
             collection.forEach {
-                separatedMvvmSubPath = "$separatedMvvmSubPath.${it.replaceFirstChar { char -> char.lowercase() }}"
+                separatedMvvmSubPath = "$separatedMvvmSubPath.${it.lowerFirstChar()}"
             }
 
             androidExtension.namespace + separatedMvvmSubPath.trim()
@@ -215,5 +237,37 @@ abstract class CreateSourceDirectory : DefaultTask() {
 
         return fileWithNewPath
     }
+
+    private fun writeRestApiInterface(dir: File, packageName: String, subModule: String,modelClassPackageName : String,modelName : String){
+        val response = Response::class.asClassName().parameterizedBy(
+            ClassName(modelClassPackageName,modelName)
+        )
+        val className = "${subModule.capitalizeFirstChar()}Api"
+        val fileSpec = FileSpec.builder(packageName, "${className}Interface")
+            .addType(
+                TypeSpec.interfaceBuilder(className)
+                    .addFunction(
+                        FunSpec.builder( "get${subModule.capitalizeFirstChar()}")
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addModifiers(KModifier.SUSPEND)
+                        .addAnnotation(
+                            AnnotationSpec.builder(GET::class)
+                                .addMember("%S","/api/${subModule.lowercase()}")
+                                .build()
+                        )
+                            .returns(response)
+                        .build())
+                    .build()
+            )
+            .build()
+        fileSpec.writeTo(dir)
+    }
+    private fun String.capitalizeFirstChar() = this.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(
+            Locale.ROOT
+        ) else it.toString()
+    }
+    private fun String.lowerFirstChar()= this.replaceFirstChar { char -> char.lowercase() }
+
 
 }

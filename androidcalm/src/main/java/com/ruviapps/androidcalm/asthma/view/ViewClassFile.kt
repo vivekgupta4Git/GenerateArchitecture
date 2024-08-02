@@ -1,4 +1,4 @@
-package com.ruviapps.androidcalm.kidney.view
+package com.ruviapps.androidcalm.asthma.view
 
 import kotlin.String
 
