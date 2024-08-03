@@ -1,14 +1,14 @@
-package com.ruviapps.androidcalm.kidney.model.dataSource
+package com.ruviapps.androidcalm.kidney.model.dataSources
 
 import com.ruviapps.androidcalm.kidney.model.domainModels.KidneyModel
-import com.ruviapps.androidcalm.kidney.model.restApi.KidneyRestApi
+import com.ruviapps.androidcalm.kidney.model.restApi.KidneyRestApis
 import kotlin.Result
 
 public class KidneyRemoteDataSource(
-  private val kidneyRestApi: KidneyRestApi,
+  private val kidneyRestApis: KidneyRestApis,
 ) {
   public suspend fun getKidneyModel(): Result<KidneyModel> {
-    val result = kidneyRestApi.getKidney()
+    val result = kidneyRestApis.getKidney()
     return if(result.isSuccessful && result.body() != null) {
       Result.success(result.body()!!)
     } else {

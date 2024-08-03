@@ -1,6 +1,10 @@
 package tasks
 
 import MvvmPluginConstant
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.Query
 import architecture.AndroidExtension
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
@@ -13,6 +17,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import extension.MvvmConfigurationExtension
+import kotlinx.coroutines.flow.Flow
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
@@ -88,21 +93,49 @@ abstract class CreateSourceDirectory : DefaultTask() {
                 packageName,
                 modelExtension.name.get()
             )
+
+        //write domain model
+
         val domainModelsPackageName = "$modifiedPackage.domainModels"
         val domainModelClassName = "${mvvmSubPath.makeGoodName()}Model"
         projectDir.writeModelClass(
             packageName = domainModelsPackageName,
             className = domainModelClassName
         )
+        //write network model
+        val networkModelsPackageName = "$modifiedPackage.networkModels"
+        val networkModelClassName = "${mvvmSubPath.makeGoodName()}NetworkModel"
+        projectDir.writeModelClass(
+            packageName = networkModelsPackageName,
+            className = networkModelClassName
+        )
+        //write entity model
+        val entityPackageName = "$modifiedPackage.entities"
+        val entityName = "${mvvmSubPath.makeGoodName()}Entity"
+        projectDir.writeEntityClass(
+            packageName = entityPackageName,
+            entityName = entityName
+        )
+
+        //write rest api
         val restApiPackageName = "$modifiedPackage.restApi"
-        val restApiName = "${mvvmSubPath.makeGoodName()}RestApi"
+        val restApiName = "${mvvmSubPath.makeGoodName()}RestApis"
         projectDir.writeRestApi(
             packageName = restApiPackageName,
             restApiName = restApiName,
-            restApiReturn = RestApiReturn(domainModelsPackageName, domainModelClassName)
+            restApiReturn = DependencyClass(domainModelsPackageName, domainModelClassName)
         )
 
-        val dataSourcePackageName = "$modifiedPackage.datasource"
+        //write dao
+        val daoPackageName = "$modifiedPackage.dao"
+        val daoName = "${mvvmSubPath.makeGoodName()}Dao"
+        projectDir.writeDao(
+            packageName = daoPackageName,
+            daoName = daoName,
+            entityDependency = DependencyClass(entityPackageName,entityName),
+        )
+        //write data source
+        val dataSourcePackageName = "$modifiedPackage.dataSources"
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
         val remoteDomainModel = DependencyClass(domainModelsPackageName, domainModelClassName)
@@ -112,6 +145,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
             dependency = remoteDependency,
             domainModel = remoteDomainModel
         )
+
         /*createModelFile(
             File(projectPath),
             modelExtension.name.get(),
@@ -149,52 +183,214 @@ abstract class CreateSourceDirectory : DefaultTask() {
         )*/
     }
 
-    private fun createInterfaceFile(
-        dir: File,
-        extensionName: String,
-        subPath: String,
-        mvvmSubPath: String
+    private fun File.writeRestApi(
+        packageName: String,
+        restApiName: String,
+        restApiReturn: DependencyClass
     ) {
-        val packageName = mvvmSubPath.getPackageName()
-        val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
-        /*    writeRestApiInterface(dir,
-                modifiedPackage,
-                subModule = subPath.split('/').last(),
-                modifiedPackage,
-                "${extensionName.capitalizeFirstChar()}Class")*/
-
-    }
-
-    private fun createModelFile(
-        dir: File,
-        extensionName: String,
-        subPath: String,
-        mvvmSubPath: String
-    ) {
-        val packageName = mvvmSubPath.getPackageName()
-        val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
-        //  writeModelClass(dir, modifiedPackage,extensionName)
-
-    }
-
-    private fun createDataSourceFile(
-        dir: File,
-        extensionName: String,
-        subPath: String,
-        mvvmSubPath: String
-    ) {
-        val packageName = mvvmSubPath.getPackageName()
-        val modifiedPackage = subPath.modifyPackageName(packageName, extensionName)
-        writeRemoteDataSource(
-            dir,
-            modifiedPackage,
-            subModule = subPath,
-            "",
-            modifiedPackage,
-            "${extensionName.capitalizeFirstChar()}Class"
+        val response = Response::class.asClassName().parameterizedBy(
+            ClassName(restApiReturn.packageName, restApiReturn.className)
         )
+        val fileSpec = FileSpec.builder(packageName, restApiName)
+            .addType(
+                TypeSpec.interfaceBuilder(restApiName)
+                    .addFunction(
+                        FunSpec.builder("get${mvvmSubPath.makeGoodName()}")
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addModifiers(KModifier.SUSPEND)
+                            .addAnnotation(
+                                AnnotationSpec.builder(GET::class)
+                                    .addMember(
+                                        "%S",
+                                        "/api/${mvvmSubPath.makeGoodName().lowercase()}"
+                                    )
+                                    .build()
+                            )
+                            .returns(response)
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+        fileSpec.writeTo(this)
+    }
+
+   private fun File.writeDao(
+       packageName: String,
+       daoName: String,
+       entityDependency : DependencyClass,
+    ) {
+
+        val response = Flow::class.asClassName().parameterizedBy(
+            List::class.asClassName().parameterizedBy(
+            ClassName(entityDependency.packageName, entityDependency.className)
+        ))
+        val fileSpec = FileSpec.builder(packageName, daoName)
+            .addType(
+                TypeSpec.interfaceBuilder(daoName)
+                    .addAnnotation(AnnotationSpec.builder(Dao::class).build())
+                    .addFunction(
+                        FunSpec.builder("getAll${mvvmSubPath.makeGoodName()}")
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addAnnotation(
+                                AnnotationSpec.builder(Query::class)
+                                    .addMember(
+                                        "%S",
+                                        "SELECT * FROM ${entityDependency.className.capitalizeFirstChar()}"
+                                    )
+                                    .build()
+                            )
+                            .returns(response)
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+        fileSpec.writeTo(this)
+    }
+    private fun File.writeEntityClass(packageName: String,
+                                      entityName: String) {
+        val fileSpec = FileSpec.builder(packageName, entityName)
+            .addType(
+                TypeSpec.classBuilder(entityName)
+                    .addModifiers(KModifier.DATA)
+                    .addAnnotation(AnnotationSpec.builder(Entity::class).build())
+                    .primaryConstructor(
+                        FunSpec.constructorBuilder()
+                            .addParameter(ParameterSpec.builder("id", Int::class)
+                                .addAnnotation(
+                                    AnnotationSpec.builder(PrimaryKey::class).build()
+                                )
+                                .build()
+                            )
+                            .addParameter("name", String::class)
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("name", String::class)
+                            .initializer("name")
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("id",Int::class)
+                            .initializer("id")
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+        fileSpec.writeTo(this)
+    }
+
+    private fun File.writeModelClass(packageName: String, className: String) {
+
+        val fileSpec = FileSpec.builder(packageName, className)
+            .addType(
+                TypeSpec.classBuilder(className)
+                    .addModifiers(KModifier.DATA)
+                    .primaryConstructor(
+                        FunSpec.constructorBuilder()
+                            .addParameter("id",Int::class)
+                            .addParameter("name", String::class)
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("id",Int::class)
+                            .initializer("id")
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("name", String::class)
+                            .initializer("name")
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+        fileSpec.writeTo(this)
+        /*
+             def kotlinFile = new File(dir, "ModelClass.kt")
+        kotlinFile.withWriter('UTF-8') {
+            writer ->
+                fileSpec.writeTo(writer)
+        }
+         */
+        //  val file = File(dir, "ModelClass.kt")
+        //  val outStream = file.writer(Charset.forName("UTF-8"))
+        //  fileSpec.writeTo(outStream)
 
     }
+
+    private fun File.writeDataSource(
+        dataSourcePackageName: String,
+        dataSourceName: String,
+        dependency: DependencyClass,
+        domainModel: DependencyClass,
+        isRemote : Boolean = true
+    ) {
+        val returnType = Result::class.asClassName().parameterizedBy(
+            ClassName(domainModel.packageName, domainModel.className)
+        )
+        val funSpec = FunSpec.builder("get${domainModel.className.capitalizeFirstChar()}")
+            .addModifiers(KModifier.SUSPEND)
+            .returns(returnType)
+        val finalFunSpec = if(isRemote) funSpec.addRemoteDataSourceStatements(dependency) else funSpec.addLocalDataSourceStatements(dependency)
+        val fileSpec = FileSpec.builder(dataSourcePackageName, dataSourceName)
+            .addType(
+                TypeSpec
+                    .classBuilder(dataSourceName)
+                    .primaryConstructor(
+                        FunSpec.constructorBuilder()
+                            .addParameter(
+                                ParameterSpec.builder(
+                                    dependency.className.lowerFirstChar(),
+                                    ClassName(dependency.packageName, dependency.className)
+                                )
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder(
+                            dependency.className.lowerFirstChar(),
+                            ClassName(dependency.packageName, dependency.className)
+                        )
+                            .initializer(dependency.className.lowerFirstChar())
+                            .addModifiers(KModifier.PRIVATE)
+                            .build()
+                    )
+                    .addFunction(
+                            finalFunSpec
+                            .build()
+                    )
+
+                    .build()
+            ).build()
+        fileSpec.writeTo(this)
+    }
+
+    private fun FunSpec.Builder.addRemoteDataSourceStatements(dependency: DependencyClass)= this.addStatement("val result = ${dependency.className.lowerFirstChar()}.get${mvvmSubPath.makeGoodName()}()")
+    .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
+    .addStatement("Result.success(result.body()!!)")
+    .nextControlFlow("else")
+    .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
+    .endControlFlow()
+
+    private fun FunSpec.Builder.addLocalDataSourceStatements(dependency: DependencyClass) = this.addStatement("val result = ${dependency.className.lowerFirstChar()}.get${mvvmSubPath.makeGoodName()}()")
+        .beginControlFlow("return if(result.isSuccessful && result. != null)")
+        .addStatement("Result.success(result )")
+        .nextControlFlow("else")
+        .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
+        .endControlFlow()
+
+
+    private fun String.capitalizeFirstChar() = this.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(
+            Locale.ROOT
+        ) else it.toString()
+    }
+
+    private fun String.lowerFirstChar() = this.replaceFirstChar { char -> char.lowercase() }
 
     private fun String.modifyPackageName(pkg: String?, ext: String): String {
         val extName = ".${ext.replaceFirstChar { it.lowercase() }}"
@@ -246,192 +442,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
     private fun String.makeGoodName() =
         this.replace('.', '/').split('/').last().capitalizeFirstChar()
 
-    private fun createInsideDirectoryIfAvailable(path: String, dir: File, field: String): File {
-        val newPath = if (path.isEmpty())
-            "${dir.path}/${field.lowercase()}"
-        else
-            "${dir.path}/${path.lowercase().replace('.', '/')}/${field.lowercase()}"
-
-        val fileWithNewPath = File(newPath)
-        //     if (!fileWithNewPath.exists())
-        //       fileWithNewPath.mkdirs()
-
-        return fileWithNewPath
-    }
-
-    private fun File.writeRestApi(
-        packageName: String,
-        restApiName: String,
-        restApiReturn: RestApiReturn
-    ) {
-        val response = Response::class.asClassName().parameterizedBy(
-            ClassName(restApiReturn.packageName, restApiReturn.className)
-        )
-        val fileSpec = FileSpec.builder(packageName, restApiName)
-            .addType(
-                TypeSpec.interfaceBuilder(restApiName)
-                    .addFunction(
-                        FunSpec.builder("get${mvvmSubPath.makeGoodName()}")
-                            .addModifiers(KModifier.ABSTRACT)
-                            .addModifiers(KModifier.SUSPEND)
-                            .addAnnotation(
-                                AnnotationSpec.builder(GET::class)
-                                    .addMember(
-                                        "%S",
-                                        "/api/${mvvmSubPath.makeGoodName().lowercase()}"
-                                    )
-                                    .build()
-                            )
-                            .returns(response)
-                            .build()
-                    )
-                    .build()
-            )
-            .build()
-        fileSpec.writeTo(this)
-    }
-
-    private fun File.writeModelClass(packageName: String, className: String) {
-
-        val fileSpec = FileSpec.builder(packageName, className)
-            .addType(
-                TypeSpec.classBuilder(className)
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter("name", String::class)
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder("name", String::class)
-                            .initializer("name")
-                            .build()
-                    )
-                    .build()
-            )
-            .build()
-        fileSpec.writeTo(this)
-        /*
-             def kotlinFile = new File(dir, "ModelClass.kt")
-        kotlinFile.withWriter('UTF-8') {
-            writer ->
-                fileSpec.writeTo(writer)
-        }
-         */
-        //  val file = File(dir, "ModelClass.kt")
-        //  val outStream = file.writer(Charset.forName("UTF-8"))
-        //  fileSpec.writeTo(outStream)
-
-    }
-
-    private fun File.writeDataSource(
-        dataSourcePackageName: String,
-        dataSourceName: String,
-        dependency: DependencyClass,
-        domainModel: DependencyClass
-    ) {
-        val returnType = Result::class.asClassName().parameterizedBy(
-            ClassName(domainModel.packageName, domainModel.className)
-        )
-        val fileSpec = FileSpec.builder(dataSourcePackageName, dataSourceName)
-            .addType(
-                TypeSpec
-                    .classBuilder(dataSourceName)
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter(
-                                ParameterSpec.builder(
-                                    dependency.className.lowerFirstChar(),
-                                    ClassName(dependency.packageName, dependency.className)
-                                )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            dependency.className.lowerFirstChar(),
-                            ClassName(dependency.packageName, dependency.className)
-                        )
-                            .initializer(dependency.className.lowerFirstChar())
-                            .addModifiers(KModifier.PRIVATE)
-                            .build()
-                    )
-                    .addFunction(
-                        FunSpec.builder("get${domainModel.className.capitalizeFirstChar()}")
-                            .addModifiers(KModifier.SUSPEND)
-                            .returns(returnType)
-                            .addStatement("val result = ${dependency.className.lowerFirstChar()}.get${mvvmSubPath.makeGoodName()}()")
-                            .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
-                            .addStatement("Result.success(result.body()!!)")
-                            .nextControlFlow("else")
-                            .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
-                            .endControlFlow()
-                            .build()
-                    )
-
-                    .build()
-            ).build()
-        fileSpec.writeTo(this)
-    }
-
-
-    private fun writeRemoteDataSource(
-        dir: File,
-        packageName: String,
-        subModule: String,
-        modelName: String = "",
-        restApiInterfacePackage: String,
-        interfaceName: String = "${subModule.capitalizeFirstChar()}Api",
-    ) {
-        val className = "${subModule.capitalizeFirstChar()}DataSource"
-
-        val fileSpec = FileSpec.builder(packageName, className)
-            .addType(
-                TypeSpec.classBuilder(className)
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter(
-                                ParameterSpec.builder(
-                                    "${subModule}Api",
-                                    ClassName(restApiInterfacePackage, interfaceName)
-                                )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .addFunction(
-                        FunSpec.builder("get$subModule")
-                            .addStatement("val result = ${subModule}Api.get${subModule}()")
-                            .build()
-                    )
-                    .build()
-            )
-            .build()
-        fileSpec.writeTo(dir)
-        /*
-             def kotlinFile = new File(dir, "ModelClass.kt")
-        kotlinFile.withWriter('UTF-8') {
-            writer ->
-                fileSpec.writeTo(writer)
-        }
-         */
-        //  val file = File(dir, "ModelClass.kt")
-        //  val outStream = file.writer(Charset.forName("UTF-8"))
-        //  fileSpec.writeTo(outStream)
-
-    }
-
-
-    private fun String.capitalizeFirstChar() = this.replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(
-            Locale.ROOT
-        ) else it.toString()
-    }
-
-    private fun String.lowerFirstChar() = this.replaceFirstChar { char -> char.lowercase() }
 
 
 }
 
-data class RestApiReturn(val packageName: String, val className: String)
 data class DependencyClass(val packageName: String, val className: String)

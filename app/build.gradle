@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-  //  id 'mvvm'
+    id 'kotlin-kapt'
     id 'mvvm-arch'
 }
 
@@ -49,6 +49,9 @@ android {
 }
 
 dependencies {
+    def roomVersion = "2.5.2" //this was 2.5.1 back then
+    implementation "androidx.room:room-ktx:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
