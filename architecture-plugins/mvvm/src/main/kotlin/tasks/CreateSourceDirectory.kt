@@ -16,6 +16,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import extension.MvvmConfigurationExtension
 import kotlinx.coroutines.flow.Flow
 import org.gradle.api.DefaultTask
@@ -26,6 +27,7 @@ import org.gradle.kotlin.dsl.getByType
 import retrofit2.Response
 import retrofit2.http.GET
 import java.io.File
+import java.io.Serializable
 import java.util.Locale
 
 
@@ -107,7 +109,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
         val networkModelClassName = "${mvvmSubPath.makeGoodName()}NetworkModel"
         projectDir.writeModelClass(
             packageName = networkModelsPackageName,
-            className = networkModelClassName
+            className = networkModelClassName,
+            isNullable = true
         )
         //write entity model
         val entityPackageName = "$modifiedPackage.entities"
@@ -123,7 +126,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         projectDir.writeRestApi(
             packageName = restApiPackageName,
             restApiName = restApiName,
-            restApiReturn = DependencyClass(domainModelsPackageName, domainModelClassName)
+            restApiReturn = DependencyClass(networkModelsPackageName, networkModelClassName)
         )
 
         //write dao
@@ -138,13 +141,25 @@ abstract class CreateSourceDirectory : DefaultTask() {
         val dataSourcePackageName = "$modifiedPackage.dataSources"
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
-        val remoteDomainModel = DependencyClass(domainModelsPackageName, domainModelClassName)
+        val remoteDomainModel = DependencyClass(networkModelsPackageName, networkModelClassName)
         projectDir.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = remoteDataSourceName,
             dependency = remoteDependency,
             domainModel = remoteDomainModel
         )
+        //write local source
+        val localDataSourceName = "${mvvmSubPath.makeGoodName()}LocalDataSource"
+        val localDependency = DependencyClass(daoPackageName, daoName)
+        val localDomainModel = DependencyClass(entityPackageName, entityName)
+        projectDir.writeDataSource(
+            dataSourcePackageName = dataSourcePackageName,
+            dataSourceName = localDataSourceName,
+            dependency = localDependency,
+            domainModel = localDomainModel,
+            isRemote = false
+        )
+
 
         /*createModelFile(
             File(projectPath),
@@ -263,11 +278,11 @@ abstract class CreateSourceDirectory : DefaultTask() {
                                 )
                                 .build()
                             )
-                            .addParameter("name", String::class)
+                            .addParameter("name", String::class.asTypeName().copy(nullable = true))
                             .build()
                     )
                     .addProperty(
-                        PropertySpec.builder("name", String::class)
+                        PropertySpec.builder("name", String::class.asTypeName().copy(nullable = true))
                             .initializer("name")
                             .build()
                     )
@@ -282,7 +297,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         fileSpec.writeTo(this)
     }
 
-    private fun File.writeModelClass(packageName: String, className: String) {
+    private fun File.writeModelClass(packageName: String, className: String,isNullable :Boolean = false) {
 
         val fileSpec = FileSpec.builder(packageName, className)
             .addType(
@@ -290,20 +305,21 @@ abstract class CreateSourceDirectory : DefaultTask() {
                     .addModifiers(KModifier.DATA)
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
-                            .addParameter("id",Int::class)
-                            .addParameter("name", String::class)
+                            .addParameter("id",Int::class.asTypeName().copy(nullable = isNullable))
+                            .addParameter("name", String::class.asTypeName().copy(nullable = isNullable))
                             .build()
                     )
                     .addProperty(
-                        PropertySpec.builder("id",Int::class)
+                        PropertySpec.builder("id",Int::class.asTypeName().copy(nullable = isNullable))
                             .initializer("id")
                             .build()
                     )
                     .addProperty(
-                        PropertySpec.builder("name", String::class)
+                        PropertySpec.builder("name", String::class.asTypeName().copy(nullable = isNullable))
                             .initializer("name")
                             .build()
                     )
+                    .addSuperIfNullable<Serializable>(isNullable)
                     .build()
             )
             .build()
@@ -328,12 +344,22 @@ abstract class CreateSourceDirectory : DefaultTask() {
         domainModel: DependencyClass,
         isRemote : Boolean = true
     ) {
-        val returnType = Result::class.asClassName().parameterizedBy(
+        val returnType = if(isRemote)Result::class.asClassName().parameterizedBy(
             ClassName(domainModel.packageName, domainModel.className)
         )
-        val funSpec = FunSpec.builder("get${domainModel.className.capitalizeFirstChar()}")
+        else
+            Flow::class.asClassName().parameterizedBy(
+                List::class.asClassName().parameterizedBy(
+                    ClassName(domainModel.packageName, domainModel.className)
+                ))
+
+        val funSpec = if(isRemote) FunSpec.builder("getAll${domainModel.className.capitalizeFirstChar()}")
             .addModifiers(KModifier.SUSPEND)
             .returns(returnType)
+        else
+            FunSpec.builder("getAll${domainModel.className.capitalizeFirstChar()}")
+                .returns(returnType)
+
         val finalFunSpec = if(isRemote) funSpec.addRemoteDataSourceStatements(dependency) else funSpec.addLocalDataSourceStatements(dependency)
         val fileSpec = FileSpec.builder(dataSourcePackageName, dataSourceName)
             .addType(
@@ -369,19 +395,17 @@ abstract class CreateSourceDirectory : DefaultTask() {
         fileSpec.writeTo(this)
     }
 
-    private fun FunSpec.Builder.addRemoteDataSourceStatements(dependency: DependencyClass)= this.addStatement("val result = ${dependency.className.lowerFirstChar()}.get${mvvmSubPath.makeGoodName()}()")
-    .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
-    .addStatement("Result.success(result.body()!!)")
-    .nextControlFlow("else")
-    .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
-    .endControlFlow()
+    private fun FunSpec.Builder.addRemoteDataSourceStatements(dependency: DependencyClass)= this
+        .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+            .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
+            .addStatement("Result.success(result.body()!!)")
+            .nextControlFlow("else")
+            .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
+            .endControlFlow()
 
-    private fun FunSpec.Builder.addLocalDataSourceStatements(dependency: DependencyClass) = this.addStatement("val result = ${dependency.className.lowerFirstChar()}.get${mvvmSubPath.makeGoodName()}()")
-        .beginControlFlow("return if(result.isSuccessful && result. != null)")
-        .addStatement("Result.success(result )")
-        .nextControlFlow("else")
-        .addStatement("Result.failure(Throwable(%S))","Unable to fetch")
-        .endControlFlow()
+    private fun FunSpec.Builder.addLocalDataSourceStatements(dependency: DependencyClass) = this
+        .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+
 
 
     private fun String.capitalizeFirstChar() = this.replaceFirstChar {
@@ -442,7 +466,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
     private fun String.makeGoodName() =
         this.replace('.', '/').split('/').last().capitalizeFirstChar()
 
-
+    private inline fun <reified T>TypeSpec.Builder.addSuperIfNullable(isNullable: Boolean) = if(isNullable) this.addSuperinterface(T::class) else this
 
 }
 

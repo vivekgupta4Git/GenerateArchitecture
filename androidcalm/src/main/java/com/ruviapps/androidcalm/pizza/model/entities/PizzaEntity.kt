@@ -9,5 +9,5 @@ import kotlin.String
 public data class PizzaEntity(
   @PrimaryKey
   public val id: Int,
-  public val name: String,
+  public val name: String?,
 )
