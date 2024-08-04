@@ -1,7 +1,9 @@
 package tasks
 
-import MvvmArchPlugin
-import MvvmArchPlugin.Companion.projectPath
+import MvvmArchPlugin.Companion.mvvmSubPath
+import MvvmArchPlugin.Companion.packageName
+import MvvmArchPlugin.Companion.projectDir
+import MvvmArchPlugin.Companion.useKotlin
 import MvvmPluginConstant
 import androidx.room.Dao
 import androidx.room.Entity
@@ -28,26 +30,27 @@ import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.getByType
 import retrofit2.Response
 import retrofit2.http.GET
+import utils.TaskUtil.addSuperIfNullable
+import utils.TaskUtil.capitalizeFirstChar
+import utils.TaskUtil.lowerFirstChar
+import utils.TaskUtil.makeGoodName
+import utils.TaskUtil.modifyPackageName
 import java.io.File
 import java.io.Serializable
-import java.util.Locale
 
 
 /**
  *@author Vivek Gupta on
  */
 abstract class CreateSourceDirectory : DefaultTask() {
-    private var useKotlin = true
-    private var mvvmSubPath: String = "feature"
-    private val androidExtension = project.extensions.getByName<AndroidExtension>("android")
-
+   // private val androidExtension = project.extensions.getByName<AndroidExtension>("android")
     @Option(
-        option = "sub-path", description = """Generates mvvm inside the sub-path.
-    Mvvm generates stuffs under main source directory + package name; 
-    so if sub-path is given then mainSourceDirectory/packageName/subPath"""
+        option = "sub-path", description = """Generates mvvm architecture inside the sub-path.
+    This plugin generates stuffs under main source set i.e main/packageName/,
+    so if sub-path is given then main/packageName/subPath/"""
     )
     fun setSubPath(subPath: String) {
-        this.mvvmSubPath = subPath
+        mvvmSubPath = subPath
     }
 
     @Option(
@@ -59,21 +62,9 @@ abstract class CreateSourceDirectory : DefaultTask() {
     fun setPreferKotlin(prefer: Boolean) {
         useKotlin = prefer
     }
-
     @TaskAction
     fun action() {
-        //get the main Source set
-        val mainSourceSet = project.layout.projectDirectory.dir("src/main")
 
-        //check for main Source set
-        if (!mainSourceSet.asFile.exists())
-            throw Throwable("This plugin requires mainSourceSet (src/main)")
-
-        //getting kotlin or java source set
-         projectPath = if (mainSourceSet.dir("kotlin").asFile.exists() && useKotlin)
-            mainSourceSet.dir("kotlin").asFile.path
-        else
-            mainSourceSet.dir("java").asFile.path
 
         //get mvvm Extension
         val extension = getExtension()
@@ -91,8 +82,6 @@ abstract class CreateSourceDirectory : DefaultTask() {
          *         networkModels
          *
          */
-        val projectDir = File(projectPath)
-        val packageName = mvvmSubPath.getPackageName()
         val modifiedPackage = modelExtension
             .insideDirectory.get()
             .modifyPackageName(
@@ -104,14 +93,14 @@ abstract class CreateSourceDirectory : DefaultTask() {
 
         val domainModelsPackageName = "$modifiedPackage.domainModels"
         val domainModelClassName = "${mvvmSubPath.makeGoodName()}Model"
-        projectDir.writeModelClass(
+        projectDir?.writeModelClass(
             packageName = domainModelsPackageName,
             className = domainModelClassName
         )
         //write network model
         val networkModelsPackageName = "$modifiedPackage.networkModels"
         val networkModelClassName = "${mvvmSubPath.makeGoodName()}NetworkModel"
-        projectDir.writeModelClass(
+        projectDir?.writeModelClass(
             packageName = networkModelsPackageName,
             className = networkModelClassName,
             isNullable = true
@@ -119,7 +108,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         //write entity model
         val entityPackageName = "$modifiedPackage.entities"
         val entityName = "${mvvmSubPath.makeGoodName()}Entity"
-        projectDir.writeEntityClass(
+        projectDir?.writeEntityClass(
             packageName = entityPackageName,
             entityName = entityName
         )
@@ -127,7 +116,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         //write rest api
         val restApiPackageName = "$modifiedPackage.restApi"
         val restApiName = "${mvvmSubPath.makeGoodName()}RestApis"
-        projectDir.writeRestApi(
+        projectDir?.writeRestApi(
             packageName = restApiPackageName,
             restApiName = restApiName,
             restApiReturn = DependencyClass(networkModelsPackageName, networkModelClassName)
@@ -136,7 +125,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         //write dao
         val daoPackageName = "$modifiedPackage.dao"
         val daoName = "${mvvmSubPath.makeGoodName()}Dao"
-        projectDir.writeDao(
+        projectDir?.writeDao(
             packageName = daoPackageName,
             daoName = daoName,
             entityDependency = DependencyClass(entityPackageName,entityName),
@@ -146,7 +135,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
         val remoteDomainModel = DependencyClass(networkModelsPackageName, networkModelClassName)
-        projectDir.writeDataSource(
+        projectDir?.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = remoteDataSourceName,
             dependency = remoteDependency,
@@ -156,7 +145,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
         val localDataSourceName = "${mvvmSubPath.makeGoodName()}LocalDataSource"
         val localDependency = DependencyClass(daoPackageName, daoName)
         val localDomainModel = DependencyClass(entityPackageName, entityName)
-        projectDir.writeDataSource(
+        projectDir?.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = localDataSourceName,
             dependency = localDependency,
@@ -414,52 +403,6 @@ abstract class CreateSourceDirectory : DefaultTask() {
         .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
 
 
-
-    private fun String.capitalizeFirstChar() = this.replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(
-            Locale.ROOT
-        ) else it.toString()
-    }
-
-    private fun String.lowerFirstChar() = this.replaceFirstChar { char -> char.lowercase() }
-
-    private fun String.modifyPackageName(pkg: String?, ext: String): String {
-        val extName = ".${ext.replaceFirstChar { it.lowercase() }}"
-
-        if (this.isEmpty())
-            return if (pkg != null)
-                pkg + extName
-            else
-                extName
-        else {
-            var separatedSubPath = ""
-            val collection = this.split('/')
-            collection.forEach {
-                separatedSubPath = "$separatedSubPath.${it.lowerFirstChar()}"
-            }
-            return if (pkg != null)
-                pkg + ".${separatedSubPath.trim()}" + extName
-            else
-                ".${separatedSubPath.trim()}" + extName
-        }
-
-    }
-
-
-    private fun String.getPackageName(): String? {
-        return if (this.isEmpty())
-            androidExtension.namespace
-        else {
-            var separatedMvvmSubPath = ""
-            val collection = this.replace('.', '/').split('/')
-            collection.forEach {
-                separatedMvvmSubPath = "$separatedMvvmSubPath.${it.lowerFirstChar()}"
-            }
-
-            androidExtension.namespace + separatedMvvmSubPath.trim()
-        }
-    }
-
     private fun getExtension(): MvvmConfigurationExtension {
         val extension = project.extensions.getByType<MvvmConfigurationExtension>()
         if (extension.model.name.get().isBlank() || extension.view.name.get()
@@ -470,10 +413,6 @@ abstract class CreateSourceDirectory : DefaultTask() {
         return extension
     }
 
-    private fun String.makeGoodName() =
-        this.replace('.', '/').split('/').last().capitalizeFirstChar()
-
-    private inline fun <reified T>TypeSpec.Builder.addSuperIfNullable(isNullable: Boolean) = if(isNullable) this.addSuperinterface(T::class) else this
 
 }
 
