@@ -1,5 +1,7 @@
 package tasks
 
+import MvvmArchPlugin
+import MvvmArchPlugin.Companion.projectPath
 import MvvmPluginConstant
 import androidx.room.Dao
 import androidx.room.Entity
@@ -68,7 +70,7 @@ abstract class CreateSourceDirectory : DefaultTask() {
             throw Throwable("This plugin requires mainSourceSet (src/main)")
 
         //getting kotlin or java source set
-        val projectPath = if (mainSourceSet.dir("kotlin").asFile.exists() && useKotlin)
+         projectPath = if (mainSourceSet.dir("kotlin").asFile.exists() && useKotlin)
             mainSourceSet.dir("kotlin").asFile.path
         else
             mainSourceSet.dir("java").asFile.path
@@ -85,6 +87,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
          *         domainModels
          *         dataSources
          *         repositories
+         *         entities
+         *         networkModels
          *
          */
         val projectDir = File(projectPath)
@@ -204,13 +208,15 @@ abstract class CreateSourceDirectory : DefaultTask() {
         restApiReturn: DependencyClass
     ) {
         val response = Response::class.asClassName().parameterizedBy(
+            List::class.asClassName().parameterizedBy(
             ClassName(restApiReturn.packageName, restApiReturn.className)
+            )
         )
         val fileSpec = FileSpec.builder(packageName, restApiName)
             .addType(
                 TypeSpec.interfaceBuilder(restApiName)
                     .addFunction(
-                        FunSpec.builder("get${mvvmSubPath.makeGoodName()}")
+                        FunSpec.builder("getAll${mvvmSubPath.makeGoodName()}")
                             .addModifiers(KModifier.ABSTRACT)
                             .addModifiers(KModifier.SUSPEND)
                             .addAnnotation(
@@ -345,7 +351,8 @@ abstract class CreateSourceDirectory : DefaultTask() {
         isRemote : Boolean = true
     ) {
         val returnType = if(isRemote)Result::class.asClassName().parameterizedBy(
-            ClassName(domainModel.packageName, domainModel.className)
+            List::class.asClassName().parameterizedBy(
+            ClassName(domainModel.packageName, domainModel.className))
         )
         else
             Flow::class.asClassName().parameterizedBy(
