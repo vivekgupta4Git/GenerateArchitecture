@@ -9,6 +9,7 @@ import org.gradle.kotlin.dsl.getByName
 import tasks.mvvm.model.database.GenerateEntityModelSourceFile
 import tasks.mvvm.model.domain.GenerateDomainModelSourceFile
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile
+import tasks.mvvm.model.network.GenerateRestApiSourceFile
 
 abstract class CreateModels : DefaultTask() {
     /**
@@ -28,6 +29,7 @@ abstract class CreateModels : DefaultTask() {
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS, GenerateDomainModelSourceFile::class).action()
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_NETWORK_MODELS, GenerateNetworkModelSourceFile::class).action()
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_ENTITY_MODELS, GenerateEntityModelSourceFile::class).action()
+        project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_REST_API, GenerateRestApiSourceFile::class).action()
     }
 
     companion object {

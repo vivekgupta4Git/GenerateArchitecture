@@ -83,6 +83,8 @@ abstract class GenerateDomainModelSourceFile : DefaultTask() {
     companion object {
         fun Project.registerTaskGenerateDomainModels(): TaskProvider<GenerateDomainModelSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS, GenerateDomainModelSourceFile::class.java) {
+                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
+
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS_DESCRIPTION
             }

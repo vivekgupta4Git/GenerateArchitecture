@@ -23,7 +23,6 @@ import utils.TaskUtil.modifyPackageName
 import java.io.File
 
 abstract class GenerateEntityModelSourceFile : DefaultTask() {
-
     @TaskAction
     fun action() {
         // get mvvm Extension
@@ -86,6 +85,7 @@ abstract class GenerateEntityModelSourceFile : DefaultTask() {
     companion object {
         fun Project.registerTaskGenerateEntityModels(): TaskProvider<GenerateEntityModelSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_ENTITY_MODELS, GenerateEntityModelSourceFile::class.java) {
+                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_ENTITY_MODELS_DESCRIPTION
             }

@@ -6,6 +6,7 @@ import MvvmArchPlugin.Companion.projectDir
 import MvvmArchPlugin.Companion.projectPath
 import MvvmArchPlugin.Companion.useKotlin
 import architecture.AndroidExtension
+import extension.MvvmConfigurationExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
@@ -40,10 +41,31 @@ abstract class GetProjectPackage : DefaultTask() {
     }
 
     companion object {
-        fun Project.registerTaskGetProjectPackage(): TaskProvider<GetProjectPackage> =
-            this.tasks.register(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE, GetProjectPackage::class.java) {
+        fun Project.registerTaskGetProjectPackage(): TaskProvider<GetProjectPackage> {
+            val mvvmConfigurationExtension =
+                this.extensions.create(
+                    MvvmPluginConstant.EXTENSION_NAME,
+                    MvvmConfigurationExtension::class.java,
+                )
+            return this.tasks.register(
+                MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE,
+                GetProjectPackage::class.java,
+            ) {
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE_DESCRIPTION
+                mvvmConfigurationExtension.model {
+                    name.convention("model")
+                    insideDirectory.convention("")
+                }
+                mvvmConfigurationExtension.viewModel {
+                    name.convention("viewModel")
+                    insideDirectory.convention("")
+                }
+                mvvmConfigurationExtension.view {
+                    name.convention("view")
+                    insideDirectory.convention("")
+                }
             }
+        }
     }
 }

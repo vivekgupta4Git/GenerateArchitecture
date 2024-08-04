@@ -82,6 +82,7 @@ abstract class GenerateNetworkModelSourceFile : DefaultTask() {
     companion object {
         fun Project.registerTaskGenerateNetworkModels(): TaskProvider<GenerateNetworkModelSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_NETWORK_MODELS, GenerateNetworkModelSourceFile::class.java) {
+                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_NETWORK_MODELS_DESCRIPTION
             }

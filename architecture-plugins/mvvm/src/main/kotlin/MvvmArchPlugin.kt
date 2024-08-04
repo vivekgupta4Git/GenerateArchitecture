@@ -6,6 +6,7 @@ import tasks.mvvm.model.CreateModels.Companion.registerTaskCreateModels
 import tasks.mvvm.model.database.GenerateEntityModelSourceFile.Companion.registerTaskGenerateEntityModels
 import tasks.mvvm.model.domain.GenerateDomainModelSourceFile.Companion.registerTaskGenerateDomainModels
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
+import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
 import java.io.File
 
 /**
@@ -22,11 +23,14 @@ class MvvmArchPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         // val task =
-        project.registerTaskGetProjectPackage()
-        project.registerCreateMvvmSourceFiles()
-        project.registerTaskCreateModels()
-        project.registerTaskGenerateDomainModels()
-        project.registerTaskGenerateNetworkModels()
-        project.registerTaskGenerateEntityModels()
+        with(project) {
+            registerTaskGetProjectPackage()
+            registerCreateMvvmSourceFiles()
+            registerTaskCreateModels()
+            registerTaskGenerateDomainModels()
+            registerTaskGenerateNetworkModels()
+            registerTaskGenerateEntityModels()
+            registerTaskGenerateRestApi()
+        }
     }
 }

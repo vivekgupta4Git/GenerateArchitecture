@@ -17,7 +17,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
-import extension.MvvmConfigurationExtension
 import kotlinx.coroutines.flow.Flow
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -25,8 +24,6 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.getByName
-import retrofit2.Response
-import retrofit2.http.GET
 import tasks.mvvm.model.CreateModels
 import utils.TaskUtil.capitalizeFirstChar
 import utils.TaskUtil.getExtension
@@ -40,32 +37,13 @@ import java.io.File
  */
 abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
     companion object {
-        fun Project.registerCreateMvvmSourceFiles(): TaskProvider<CreateMvvmSourceCodeFiles> {
-            val mvvmConfigurationExtension =
-                project.extensions.create(
-                    MvvmPluginConstant.EXTENSION_NAME,
-                    MvvmConfigurationExtension::class.java,
-                )
-            return this.tasks.register(MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES, CreateMvvmSourceCodeFiles::class.java) {
+        fun Project.registerCreateMvvmSourceFiles(): TaskProvider<CreateMvvmSourceCodeFiles> =
+            this.tasks.register(MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES, CreateMvvmSourceCodeFiles::class.java) {
                 // this task needs project's package name and other stuffs to generate the code
                 dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
-
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES_DESCRIPTION
-                mvvmConfigurationExtension.model {
-                    name.convention("model")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.viewModel {
-                    name.convention("viewModel")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.view {
-                    name.convention("view")
-                    insideDirectory.convention("")
-                }
             }
-        }
     }
 
     @Option(
@@ -126,13 +104,8 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
         val entityName = "${mvvmSubPath.makeGoodName()}Entity"
 
         // write rest api
+        val restApiName = "${mvvmSubPath.makeGoodName()}RestApi"
         val restApiPackageName = "$modifiedPackage.restApi"
-        val restApiName = "${mvvmSubPath.makeGoodName()}RestApis"
-        projectDir?.writeRestApi(
-            packageName = restApiPackageName,
-            restApiName = restApiName,
-            restApiReturn = DependencyClass(networkModelsPackageName, networkModelClassName),
-        )
 
         // write dao
         val daoPackageName = "$modifiedPackage.dao"
@@ -200,42 +173,6 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
             viewModelExtension.insideDirectory.get(),
             mvvmSubPath
         )*/
-    }
-
-    private fun File.writeRestApi(
-        packageName: String,
-        restApiName: String,
-        restApiReturn: DependencyClass,
-    ) {
-        val response =
-            Response::class.asClassName().parameterizedBy(
-                List::class.asClassName().parameterizedBy(
-                    ClassName(restApiReturn.packageName, restApiReturn.className),
-                ),
-            )
-        val fileSpec =
-            FileSpec
-                .builder(packageName, restApiName)
-                .addType(
-                    TypeSpec
-                        .interfaceBuilder(restApiName)
-                        .addFunction(
-                            FunSpec
-                                .builder("getAll${mvvmSubPath.makeGoodName()}")
-                                .addModifiers(KModifier.ABSTRACT)
-                                .addModifiers(KModifier.SUSPEND)
-                                .addAnnotation(
-                                    AnnotationSpec
-                                        .builder(GET::class)
-                                        .addMember(
-                                            "%S",
-                                            "/api/${mvvmSubPath.makeGoodName().lowercase()}",
-                                        ).build(),
-                                ).returns(response)
-                                .build(),
-                        ).build(),
-                ).build()
-        fileSpec.writeTo(this)
     }
 
     private fun File.writeDao(
