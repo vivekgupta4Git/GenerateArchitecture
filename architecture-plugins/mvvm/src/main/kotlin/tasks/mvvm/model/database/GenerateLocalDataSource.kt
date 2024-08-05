@@ -1,8 +1,5 @@
 package tasks.mvvm.model.database
 
-import MvvmArchPlugin
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
 import MvvmPluginConstant
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -15,8 +12,10 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import kotlinx.coroutines.flow.Flow
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
 import utils.TaskUtil.capitalizeFirstChar
@@ -27,9 +26,24 @@ import utils.TaskUtil.modifyPackageName
 import java.io.File
 
 abstract class GenerateLocalDataSource : OptionTask() {
-
     @TaskAction
-    fun action()  {
+    fun action() {
+        val projectPath =
+            projectPathService
+                .get()
+                .parameters.projectPath
+                .get()
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.packageName
+                .get()
+        val mvvmSubPath =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+        val projectDir = File(projectPath)
         val extension = getExtension(project)
 
         // model extension
@@ -56,11 +70,12 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val localDataSourceName = "${mvvmSubPath.makeGoodName()}LocalDataSource"
         val localDependency = DependencyClass(daoPackageName, daoName)
         val localDomainModel = DependencyClass(entityPackageName, entityName)
-        MvvmArchPlugin.projectDir?.writeDataSource(
+        projectDir.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = localDataSourceName,
             dependency = localDependency,
             domainModel = localDomainModel,
+            mvvmSubPath = mvvmSubPath,
         )
     }
 
@@ -69,6 +84,7 @@ abstract class GenerateLocalDataSource : OptionTask() {
         dataSourceName: String,
         dependency: DependencyClass,
         domainModel: DependencyClass,
+        mvvmSubPath: String,
     ) {
         val returnType =
             Flow::class.asClassName().parameterizedBy(
@@ -82,7 +98,7 @@ abstract class GenerateLocalDataSource : OptionTask() {
                 .builder("getAll${domainModel.className.capitalizeFirstChar()}")
                 .returns(returnType)
 
-        val finalFunSpec = funSpec.addLocalDataSourceStatements(dependency)
+        val finalFunSpec = funSpec.addLocalDataSourceStatements(dependency, mvvmSubPath)
 
         val fileSpec =
             FileSpec
@@ -116,15 +132,22 @@ abstract class GenerateLocalDataSource : OptionTask() {
         fileSpec.writeTo(this)
     }
 
-    private fun FunSpec.Builder.addLocalDataSourceStatements(dependency: DependencyClass) =
-        this.addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+    private fun FunSpec.Builder.addLocalDataSourceStatements(
+        dependency: DependencyClass,
+        mvvmSubPath: String,
+    ) = this.addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
 
     companion object {
-        fun Project.registerTaskGenerateLocalDataSource(): TaskProvider<GenerateLocalDataSource> =
+        fun Project.registerTaskGenerateLocalDataSource(
+            serviceProvider: Provider<ProjectPathService>,
+        ): TaskProvider<GenerateLocalDataSource> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_LOCAL_DATA_SOURCE, GenerateLocalDataSource::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_DAO)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_LOCAL_DATA_SOURCE_DESCRIPTION
+
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
     }
 }

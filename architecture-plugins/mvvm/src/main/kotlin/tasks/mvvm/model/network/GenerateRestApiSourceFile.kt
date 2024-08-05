@@ -1,8 +1,6 @@
 package tasks.mvvm.model.network
 
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
-import MvvmArchPlugin.Companion.projectDir
+import MvvmPluginConstant
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -11,21 +9,39 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
-import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import retrofit2.Response
 import retrofit2.http.GET
+import service.ProjectPathService
 import tasks.DependencyClass
+import tasks.OptionTask
 import utils.TaskUtil.getExtension
 import utils.TaskUtil.makeGoodName
 import utils.TaskUtil.modifyPackageName
 import java.io.File
 
-abstract class GenerateRestApiSourceFile : DefaultTask() {
+abstract class GenerateRestApiSourceFile : OptionTask() {
     @TaskAction
     fun action() {
+        val projectPath =
+            projectPathService
+                .get()
+                .parameters.projectPath
+                .get()
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.packageName
+                .get()
+        val mvvmSubPath =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+        val projectDir = File(projectPath)
         // model extension
         val modelExtension = getExtension(project).model
         val modifiedPackage =
@@ -43,10 +59,11 @@ abstract class GenerateRestApiSourceFile : DefaultTask() {
         val restApiName = "${mvvmSubPath.makeGoodName()}RestApi"
         val restApiPackageName = "$modifiedPackage.restApi"
 
-        projectDir?.writeRestApi(
+        projectDir.writeRestApi(
             packageName = restApiPackageName,
             restApiName = restApiName,
             restApiReturn = DependencyClass(networkModelsPackageName, networkModelClassName),
+            mvvmSubPath = mvvmSubPath,
         )
     }
 
@@ -54,6 +71,7 @@ abstract class GenerateRestApiSourceFile : DefaultTask() {
         packageName: String,
         restApiName: String,
         restApiReturn: DependencyClass,
+        mvvmSubPath: String,
     ) {
         val response =
             Response::class.asClassName().parameterizedBy(
@@ -87,11 +105,14 @@ abstract class GenerateRestApiSourceFile : DefaultTask() {
     }
 
     companion object {
-        fun Project.registerTaskGenerateRestApi(): TaskProvider<GenerateRestApiSourceFile> =
+        fun Project.registerTaskGenerateRestApi(serviceProvider: Provider<ProjectPathService>): TaskProvider<GenerateRestApiSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_REST_API, GenerateRestApiSourceFile::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_NETWORK_MODELS)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_REST_API_DESCRIPTION
+
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
     }
 }

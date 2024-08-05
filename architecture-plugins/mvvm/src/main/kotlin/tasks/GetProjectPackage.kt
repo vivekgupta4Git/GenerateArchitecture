@@ -1,21 +1,16 @@
 package tasks
 
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
-import MvvmArchPlugin.Companion.projectDir
-import MvvmArchPlugin.Companion.projectPath
-import MvvmArchPlugin.Companion.useKotlin
 import architecture.AndroidExtension
 import extension.MvvmConfigurationExtension
-import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.getByName
+import service.ProjectPathService
 import utils.TaskUtil.getPackageName
-import java.io.File
 
-abstract class GetProjectPackage : DefaultTask() {
+abstract class GetProjectPackage : OptionTask() {
     private val androidExtension = project.extensions.getByName<AndroidExtension>("android")
 
     @TaskAction
@@ -29,19 +24,32 @@ abstract class GetProjectPackage : DefaultTask() {
         }
 
         // getting kotlin or java source set
-        projectPath =
-            if (mainSourceSet.dir("kotlin").asFile.exists() && useKotlin) {
+        val projectPath =
+            if (mainSourceSet.dir("kotlin").asFile.exists() &&
+                projectPathService
+                    .get()
+                    .parameters.useKotlin
+                    .get()
+            ) {
                 mainSourceSet.dir("kotlin").asFile.path
             } else {
                 mainSourceSet.dir("java").asFile.path
             }
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+                .getPackageName(androidExtension)
 
-        projectDir = File(projectPath)
-        packageName = mvvmSubPath.getPackageName(androidExtension)
+        with(projectPathService.get().parameters) {
+            this.projectPath.set(projectPath)
+            this.packageName.set(packageName)
+        }
     }
 
     companion object {
-        fun Project.registerTaskGetProjectPackage(): TaskProvider<GetProjectPackage> {
+        fun Project.registerTaskGetProjectPackage(serviceProvider: Provider<ProjectPathService>): TaskProvider<GetProjectPackage> {
             val mvvmConfigurationExtension =
                 this.extensions.create(
                     MvvmPluginConstant.EXTENSION_NAME,
@@ -66,6 +74,9 @@ abstract class GetProjectPackage : DefaultTask() {
                     name.convention("view")
                     insideDirectory.convention("")
                 }
+                // connection with service
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
         }
     }

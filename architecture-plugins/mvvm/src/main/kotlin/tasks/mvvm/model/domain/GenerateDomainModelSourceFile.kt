@@ -1,8 +1,6 @@
 package tasks.mvvm.model.domain
 
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
-import MvvmArchPlugin.Companion.projectDir
+import MvvmPluginConstant
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -10,8 +8,10 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import service.ProjectPathService
 import tasks.OptionTask
 import utils.TaskUtil.addSuperIfNullable
 import utils.TaskUtil.getExtension
@@ -23,6 +23,22 @@ import java.io.Serializable
 abstract class GenerateDomainModelSourceFile : OptionTask() {
     @TaskAction
     fun action() {
+        val projectPath =
+            projectPathService
+                .get()
+                .parameters.projectPath
+                .get()
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.packageName
+                .get()
+        val mvvmSubPath =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+        val projectDir = File(projectPath)
         // get mvvm Extension
         val extension = getExtension(project)
 
@@ -81,12 +97,17 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
     }
 
     companion object {
-        fun Project.registerTaskGenerateDomainModels(): TaskProvider<GenerateDomainModelSourceFile> =
+        fun Project.registerTaskGenerateDomainModels(
+            serviceProvider: Provider<ProjectPathService>,
+        ): TaskProvider<GenerateDomainModelSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS, GenerateDomainModelSourceFile::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
 
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS_DESCRIPTION
+
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
     }
 }

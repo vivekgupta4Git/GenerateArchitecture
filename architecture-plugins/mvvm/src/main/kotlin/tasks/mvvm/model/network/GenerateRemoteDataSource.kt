@@ -1,8 +1,5 @@
 package tasks.mvvm.model.network
 
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
-import MvvmArchPlugin.Companion.projectDir
 import MvvmPluginConstant
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -14,8 +11,10 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
 import utils.TaskUtil.capitalizeFirstChar
@@ -26,9 +25,24 @@ import utils.TaskUtil.modifyPackageName
 import java.io.File
 
 abstract class GenerateRemoteDataSource : OptionTask() {
-
     @TaskAction
     fun action() {
+        val projectPath =
+            projectPathService
+                .get()
+                .parameters.projectPath
+                .get()
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.packageName
+                .get()
+        val mvvmSubPath =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+        val projectDir = File(projectPath)
         val extension = getExtension(project)
 
         // model extension
@@ -53,11 +67,12 @@ abstract class GenerateRemoteDataSource : OptionTask() {
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
         val remoteDomainModel = DependencyClass(networkModelsPackageName, networkModelClassName)
-        projectDir?.writeDataSource(
+        projectDir.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = remoteDataSourceName,
             dependency = remoteDependency,
             domainModel = remoteDomainModel,
+            mvvmSubPath = mvvmSubPath,
         )
     }
 
@@ -66,6 +81,7 @@ abstract class GenerateRemoteDataSource : OptionTask() {
         dataSourceName: String,
         dependency: DependencyClass,
         domainModel: DependencyClass,
+        mvvmSubPath: String,
     ) {
         val returnType =
             Result::class.asClassName().parameterizedBy(
@@ -80,7 +96,7 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .addModifiers(KModifier.SUSPEND)
                 .returns(returnType)
 
-        val finalFunSpec = funSpec.addRemoteDataSourceStatements(dependency)
+        val finalFunSpec = funSpec.addRemoteDataSourceStatements(dependency, mvvmSubPath)
 
         val fileSpec =
             FileSpec
@@ -114,21 +130,28 @@ abstract class GenerateRemoteDataSource : OptionTask() {
         fileSpec.writeTo(this)
     }
 
-    private fun FunSpec.Builder.addRemoteDataSourceStatements(dependency: DependencyClass) =
-        this
-            .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
-            .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
-            .addStatement("Result.success(result.body()!!)")
-            .nextControlFlow("else")
-            .addStatement("Result.failure(Throwable(%S))", "Unable to fetch")
-            .endControlFlow()
+    private fun FunSpec.Builder.addRemoteDataSourceStatements(
+        dependency: DependencyClass,
+        mvvmSubPath: String,
+    ) = this
+        .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+        .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
+        .addStatement("Result.success(result.body()!!)")
+        .nextControlFlow("else")
+        .addStatement("Result.failure(Throwable(%S))", "Unable to fetch")
+        .endControlFlow()
 
     companion object {
-        fun Project.registerTaskGenerateRemoteDataSource(): TaskProvider<GenerateRemoteDataSource> =
+        fun Project.registerTaskGenerateRemoteDataSource(
+            serviceProvider: Provider<ProjectPathService>,
+        ): TaskProvider<GenerateRemoteDataSource> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_REMOTE_DATA_SOURCE, GenerateRemoteDataSource::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_REST_API)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_REMOTE_DATA_SOURCE_DESCRIPTION
+
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
     }
 }

@@ -1,5 +1,7 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.registerIfAbsent
+import service.ProjectPathService
 import tasks.CreateMvvmSourceCodeFiles.Companion.registerCreateMvvmSourceFiles
 import tasks.GetProjectPackage.Companion.registerTaskGetProjectPackage
 import tasks.mvvm.model.CreateModels.Companion.registerTaskCreateModels
@@ -10,34 +12,33 @@ import tasks.mvvm.model.domain.GenerateDomainModelSourceFile.Companion.registerT
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
 import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskGenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
-import java.io.File
 
 /**
  * @author Vivek Gupta
  */
 class MvvmArchPlugin : Plugin<Project> {
-    companion object {
-        var useKotlin = true
-        var projectPath: String = ""
-        var mvvmSubPath: String = ""
-        var packageName: String? = ""
-        var projectDir: File? = null
-    }
-
     override fun apply(project: Project) {
-        // no cache
-        // val task =
+        val serviceProvider =
+            project.gradle.sharedServices.registerIfAbsent("projectPathService", ProjectPathService::class) {
+                with(parameters) {
+                    projectPath.set("")
+                    packageName.set("")
+                    useKotlin.set(true)
+                    mvvmSubPath.set("")
+                }
+            }
+
         with(project) {
-            registerTaskGetProjectPackage()
-            registerCreateMvvmSourceFiles()
-            registerTaskCreateModels()
-            registerTaskGenerateDomainModels()
-            registerTaskGenerateNetworkModels()
-            registerTaskGenerateEntityModels()
-            registerTaskGenerateRestApi()
-            registerTaskGenerateDao()
-            registerTaskGenerateRemoteDataSource()
-            registerTaskGenerateLocalDataSource()
+            registerTaskGetProjectPackage(serviceProvider)
+            registerCreateMvvmSourceFiles(serviceProvider)
+            registerTaskCreateModels(serviceProvider)
+            registerTaskGenerateDomainModels(serviceProvider)
+            registerTaskGenerateNetworkModels(serviceProvider)
+            registerTaskGenerateEntityModels(serviceProvider)
+            registerTaskGenerateRestApi(serviceProvider)
+            registerTaskGenerateDao(serviceProvider)
+            registerTaskGenerateRemoteDataSource(serviceProvider)
+            registerTaskGenerateLocalDataSource(serviceProvider)
         }
     }
 }

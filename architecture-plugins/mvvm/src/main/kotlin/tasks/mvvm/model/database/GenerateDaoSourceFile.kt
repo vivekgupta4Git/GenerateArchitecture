@@ -1,8 +1,6 @@
 package tasks.mvvm.model.database
 
-import MvvmArchPlugin.Companion.mvvmSubPath
-import MvvmArchPlugin.Companion.packageName
-import MvvmArchPlugin.Companion.projectDir
+import MvvmPluginConstant
 import androidx.room.Dao
 import androidx.room.Query
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -15,8 +13,10 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import kotlinx.coroutines.flow.Flow
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
 import utils.TaskUtil.capitalizeFirstChar
@@ -28,6 +28,23 @@ import java.io.File
 abstract class GenerateDaoSourceFile : OptionTask() {
     @TaskAction
     fun action() {
+        val projectPath =
+            projectPathService
+                .get()
+                .parameters.projectPath
+                .get()
+        val packageName =
+            projectPathService
+                .get()
+                .parameters.packageName
+                .get()
+        val mvvmSubPath =
+            projectPathService
+                .get()
+                .parameters.mvvmSubPath
+                .get()
+        val projectDir = File(projectPath)
+
         // get mvvm Extension
         val extension = getExtension(project)
 
@@ -49,10 +66,11 @@ abstract class GenerateDaoSourceFile : OptionTask() {
         // write dao
         val daoPackageName = "$modifiedPackage.dao"
         val daoName = "${mvvmSubPath.makeGoodName()}Dao"
-        projectDir?.writeDao(
+        projectDir.writeDao(
             packageName = daoPackageName,
             daoName = daoName,
             entityDependency = DependencyClass(entityPackageName, entityName),
+            mvvmSubPath = mvvmSubPath,
         )
     }
 
@@ -60,6 +78,7 @@ abstract class GenerateDaoSourceFile : OptionTask() {
         packageName: String,
         daoName: String,
         entityDependency: DependencyClass,
+        mvvmSubPath: String,
     ) {
         val response =
             Flow::class.asClassName().parameterizedBy(
@@ -93,11 +112,14 @@ abstract class GenerateDaoSourceFile : OptionTask() {
     }
 
     companion object {
-        fun Project.registerTaskGenerateDao(): TaskProvider<GenerateDaoSourceFile> =
+        fun Project.registerTaskGenerateDao(serviceProvider: Provider<ProjectPathService>): TaskProvider<GenerateDaoSourceFile> =
             this.tasks.register(MvvmPluginConstant.TASK_GENERATE_DAO, GenerateDaoSourceFile::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_ENTITY_MODELS)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_DAO_DESCRIPTION
+
+                projectPathService.set(serviceProvider)
+                usesService(serviceProvider)
             }
     }
 }
