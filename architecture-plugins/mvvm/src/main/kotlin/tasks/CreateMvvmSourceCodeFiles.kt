@@ -101,12 +101,13 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
         val remoteDomainModel = DependencyClass(networkModelsPackageName, networkModelClassName)
-        projectDir?.writeDataSource(
+      /*  projectDir?.writeDataSource(
             dataSourcePackageName = dataSourcePackageName,
             dataSourceName = remoteDataSourceName,
             dependency = remoteDependency,
             domainModel = remoteDomainModel,
-        )
+        )*/
+
         // write local source
         val localDataSourceName = "${mvvmSubPath.makeGoodName()}LocalDataSource"
         val localDependency = DependencyClass(daoPackageName, daoName)

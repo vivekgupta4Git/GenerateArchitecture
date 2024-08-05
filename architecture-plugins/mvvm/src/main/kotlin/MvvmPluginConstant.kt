@@ -28,4 +28,10 @@ object MvvmPluginConstant {
 
     const val TASK_GENERATE_DAO = "generateDao"
     const val TASK_GENERATE_DAO_DESCRIPTION: String = "This task generates dao"
+
+    const val TASK_GENERATE_REMOTE_DATA_SOURCE = "generateRemoteDataSource"
+    const val TASK_GENERATE_REMOTE_DATA_SOURCE_DESCRIPTION: String = "This task generates remote data source"
+
+    const val TASK_GENERATE_LOCAL_DATA_SOURCE = "generateLocalDataSource"
+    const val TASK_GENERATE_LOCAL_DATA_SOURCE_DESCRIPTION: String = "This task generates local data source"
 }

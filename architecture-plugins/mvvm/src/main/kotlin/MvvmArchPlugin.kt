@@ -5,8 +5,10 @@ import tasks.GetProjectPackage.Companion.registerTaskGetProjectPackage
 import tasks.mvvm.model.CreateModels.Companion.registerTaskCreateModels
 import tasks.mvvm.model.database.GenerateDaoSourceFile.Companion.registerTaskGenerateDao
 import tasks.mvvm.model.database.GenerateEntityModelSourceFile.Companion.registerTaskGenerateEntityModels
+import tasks.mvvm.model.database.GenerateLocalDataSource.Companion.registerTaskGenerateLocalDataSource
 import tasks.mvvm.model.domain.GenerateDomainModelSourceFile.Companion.registerTaskGenerateDomainModels
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
+import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskGenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
 import java.io.File
 
@@ -24,16 +26,18 @@ class MvvmArchPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         // no cache
-            // val task =
-            with(project) {
-                registerTaskGetProjectPackage()
-                registerCreateMvvmSourceFiles()
-                registerTaskCreateModels()
-                registerTaskGenerateDomainModels()
-                registerTaskGenerateNetworkModels()
-                registerTaskGenerateEntityModels()
-                registerTaskGenerateRestApi()
-                registerTaskGenerateDao()
-            }
+        // val task =
+        with(project) {
+            registerTaskGetProjectPackage()
+            registerCreateMvvmSourceFiles()
+            registerTaskCreateModels()
+            registerTaskGenerateDomainModels()
+            registerTaskGenerateNetworkModels()
+            registerTaskGenerateEntityModels()
+            registerTaskGenerateRestApi()
+            registerTaskGenerateDao()
+            registerTaskGenerateRemoteDataSource()
+            registerTaskGenerateLocalDataSource()
+        }
     }
 }
