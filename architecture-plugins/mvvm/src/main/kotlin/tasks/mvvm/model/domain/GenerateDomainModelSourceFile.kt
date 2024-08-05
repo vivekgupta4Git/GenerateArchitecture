@@ -9,10 +9,10 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
-import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import tasks.OptionTask
 import utils.TaskUtil.addSuperIfNullable
 import utils.TaskUtil.getExtension
 import utils.TaskUtil.makeGoodName
@@ -20,7 +20,7 @@ import utils.TaskUtil.modifyPackageName
 import java.io.File
 import java.io.Serializable
 
-abstract class GenerateDomainModelSourceFile : DefaultTask() {
+abstract class GenerateDomainModelSourceFile : OptionTask() {
     @TaskAction
     fun action() {
         // get mvvm Extension

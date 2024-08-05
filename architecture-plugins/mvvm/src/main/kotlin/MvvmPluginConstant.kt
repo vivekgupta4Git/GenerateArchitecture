@@ -24,5 +24,8 @@ object MvvmPluginConstant {
     const val TASK_CREATE_MVVM_SOURCE_CODES_DESCRIPTION = "Generate directory structure according to Mvvm Architecture"
 
     const val TASK_GET_PROJECT_PACKAGE = "getProjectPackage"
-    const val TASK_GET_PROJECT_PACKAGE_DESCRIPTION: String = "Get project package name"
+    const val TASK_GET_PROJECT_PACKAGE_DESCRIPTION: String = "This project get project's package name"
+
+    const val TASK_GENERATE_DAO = "generateDao"
+    const val TASK_GENERATE_DAO_DESCRIPTION: String = "This task generates dao"
 }

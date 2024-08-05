@@ -1,9 +1,9 @@
-package com.ruviapps.kotlinpoet.feature.domain.domainModels
+package com.ruviapps.androidcalm.tomato.model.domainModels
 
 import kotlin.Int
 import kotlin.String
 
-public data class FeatureModel(
+public data class TomatoModel(
   public val id: Int,
   public val name: String,
 )

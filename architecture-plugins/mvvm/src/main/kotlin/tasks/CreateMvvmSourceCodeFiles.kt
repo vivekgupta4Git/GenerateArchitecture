@@ -5,9 +5,6 @@ import MvvmArchPlugin.Companion.packageName
 import MvvmArchPlugin.Companion.projectDir
 import MvvmArchPlugin.Companion.useKotlin
 import MvvmPluginConstant
-import androidx.room.Dao
-import androidx.room.Query
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -36,16 +33,6 @@ import java.io.File
  *@author Vivek Gupta on
  */
 abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
-    companion object {
-        fun Project.registerCreateMvvmSourceFiles(): TaskProvider<CreateMvvmSourceCodeFiles> =
-            this.tasks.register(MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES, CreateMvvmSourceCodeFiles::class.java) {
-                // this task needs project's package name and other stuffs to generate the code
-                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
-                group = MvvmPluginConstant.PLUGIN_GROUP
-                description = MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES_DESCRIPTION
-            }
-    }
-
     @Option(
         option = "sub-path",
         description = """Generates mvvm architecture inside the sub-path.
@@ -70,12 +57,6 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
     fun action() {
         project.tasks.getByName(MvvmPluginConstant.TASK_CREATE_MODELS, CreateModels::class).action()
 
-        // get mvvm Extension
-        val extension = getExtension(project)
-
-        // model extension
-        val modelExtension = extension.model
-
         /**
          * model >
          *         interfaces
@@ -86,6 +67,10 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
          *         networkModels
          *
          */
+        val extension = getExtension(project)
+
+        // model extension
+        val modelExtension = extension.model
         val modifiedPackage =
             modelExtension
                 .insideDirectory
@@ -110,11 +95,7 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
         // write dao
         val daoPackageName = "$modifiedPackage.dao"
         val daoName = "${mvvmSubPath.makeGoodName()}Dao"
-        projectDir?.writeDao(
-            packageName = daoPackageName,
-            daoName = daoName,
-            entityDependency = DependencyClass(entityPackageName, entityName),
-        )
+
         // write data source
         val dataSourcePackageName = "$modifiedPackage.dataSources"
         val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
@@ -173,42 +154,6 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
             viewModelExtension.insideDirectory.get(),
             mvvmSubPath
         )*/
-    }
-
-    private fun File.writeDao(
-        packageName: String,
-        daoName: String,
-        entityDependency: DependencyClass,
-    ) {
-        val response =
-            Flow::class.asClassName().parameterizedBy(
-                List::class.asClassName().parameterizedBy(
-                    ClassName(entityDependency.packageName, entityDependency.className),
-                ),
-            )
-        val fileSpec =
-            FileSpec
-                .builder(packageName, daoName)
-                .addType(
-                    TypeSpec
-                        .interfaceBuilder(daoName)
-                        .addAnnotation(AnnotationSpec.builder(Dao::class).build())
-                        .addFunction(
-                            FunSpec
-                                .builder("getAll${mvvmSubPath.makeGoodName()}")
-                                .addModifiers(KModifier.ABSTRACT)
-                                .addAnnotation(
-                                    AnnotationSpec
-                                        .builder(Query::class)
-                                        .addMember(
-                                            "%S",
-                                            "SELECT * FROM ${entityDependency.className.capitalizeFirstChar()}",
-                                        ).build(),
-                                ).returns(response)
-                                .build(),
-                        ).build(),
-                ).build()
-        fileSpec.writeTo(this)
     }
 
     private fun File.writeDataSource(
@@ -297,6 +242,16 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
     private fun FunSpec.Builder.addLocalDataSourceStatements(dependency: DependencyClass) =
         this
             .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+
+    companion object {
+        fun Project.registerCreateMvvmSourceFiles(): TaskProvider<CreateMvvmSourceCodeFiles> =
+            this.tasks.register(MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES, CreateMvvmSourceCodeFiles::class.java) {
+                // this task needs project's package name and other stuffs to generate the code
+                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
+                group = MvvmPluginConstant.PLUGIN_GROUP
+                description = MvvmPluginConstant.TASK_CREATE_MVVM_SOURCE_CODES_DESCRIPTION
+            }
+    }
 }
 
 data class DependencyClass(

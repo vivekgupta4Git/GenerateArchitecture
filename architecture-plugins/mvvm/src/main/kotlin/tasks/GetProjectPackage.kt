@@ -53,6 +53,7 @@ abstract class GetProjectPackage : DefaultTask() {
             ) {
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE_DESCRIPTION
+
                 mvvmConfigurationExtension.model {
                     name.convention("model")
                     insideDirectory.convention("")
