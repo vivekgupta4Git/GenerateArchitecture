@@ -19,7 +19,7 @@ import tasks.mvvm.model.network.GenerateRestApiSourceFile
 abstract class CreateModels : OptionTask() {
     /**
      * Task will generate following structure
-     * model >
+     * model/data >
      *         dao
      *         dataSources
      *         domainModels

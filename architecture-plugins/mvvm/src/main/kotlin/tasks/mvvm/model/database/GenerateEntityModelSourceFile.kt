@@ -71,13 +71,17 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                     TypeSpec
                         .classBuilder(entityName)
                         .addModifiers(KModifier.DATA)
-                        .addAnnotation(AnnotationSpec.builder(Entity::class).build())
-                        .primaryConstructor(
+                        .addAnnotation(
+                            AnnotationSpec
+                                .builder(Entity::class)
+                                //  .addMember("tableName = %S", "${entityName.substringBefore("Entity").lowercase()}s")
+                                .build(),
+                        ).primaryConstructor(
                             FunSpec
                                 .constructorBuilder()
                                 .addParameter(
                                     ParameterSpec
-                                        .builder("id", Int::class)
+                                        .builder("id", String::class)
                                         .addAnnotation(
                                             AnnotationSpec.builder(PrimaryKey::class).build(),
                                         ).build(),
@@ -90,7 +94,7 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("id", Int::class)
+                                .builder("id", String::class)
                                 .initializer("id")
                                 .build(),
                         ).build(),

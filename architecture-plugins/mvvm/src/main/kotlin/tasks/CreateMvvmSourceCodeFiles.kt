@@ -12,6 +12,7 @@ import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.getByName
 import service.ProjectPathService
 import tasks.mvvm.model.CreateModels
+import utils.TaskUtil.makeGoodName
 
 /**
  *@author Vivek Gupta on
@@ -31,6 +32,10 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
             .get()
             .parameters.mvvmSubPath
             .set(subPath)
+        projectPathService
+            .get()
+            .parameters.domainName
+            .set(subPath.makeGoodName())
     }
 
     @Option(

@@ -56,7 +56,7 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
 
         val domainModelsPackageName = "$modifiedPackage.domainModels"
         val domainModelClassName = "${mvvmSubPath.makeGoodName()}Model"
-        projectDir?.writeModelClass(
+        projectDir.writeModelClass(
             packageName = domainModelsPackageName,
             className = domainModelClassName,
         )
@@ -77,12 +77,12 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
                         .primaryConstructor(
                             FunSpec
                                 .constructorBuilder()
-                                .addParameter("id", Int::class.asTypeName().copy(nullable = isNullable))
+                                .addParameter("id", String::class.asTypeName().copy(nullable = isNullable))
                                 .addParameter("name", String::class.asTypeName().copy(nullable = isNullable))
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("id", Int::class.asTypeName().copy(nullable = isNullable))
+                                .builder("id", String::class.asTypeName().copy(nullable = isNullable))
                                 .initializer("id")
                                 .build(),
                         ).addProperty(

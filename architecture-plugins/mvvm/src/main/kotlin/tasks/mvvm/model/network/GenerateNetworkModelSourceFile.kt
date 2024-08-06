@@ -76,12 +76,12 @@ abstract class GenerateNetworkModelSourceFile : OptionTask() {
                         .primaryConstructor(
                             FunSpec
                                 .constructorBuilder()
-                                .addParameter("id", Int::class.asTypeName().copy(nullable = true))
+                                .addParameter("id", String::class.asTypeName().copy(nullable = true))
                                 .addParameter("name", String::class.asTypeName().copy(nullable = true))
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("id", Int::class.asTypeName().copy(nullable = true))
+                                .builder("id", String::class.asTypeName().copy(nullable = true))
                                 .initializer("id")
                                 .build(),
                         ).addProperty(

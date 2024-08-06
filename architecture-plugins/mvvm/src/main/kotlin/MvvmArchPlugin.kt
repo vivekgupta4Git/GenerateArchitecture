@@ -12,6 +12,7 @@ import tasks.mvvm.model.domain.GenerateDomainModelSourceFile.Companion.registerT
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
 import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskGenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
+import utils.TaskUtil.makeGoodName
 
 /**
  * @author Vivek Gupta
@@ -24,7 +25,8 @@ class MvvmArchPlugin : Plugin<Project> {
                     projectPath.set("")
                     packageName.set("")
                     useKotlin.set(true)
-                    mvvmSubPath.set("")
+                    mvvmSubPath.set("feature")
+                    domainName.set(mvvmSubPath.get().makeGoodName())
                 }
             }
 
