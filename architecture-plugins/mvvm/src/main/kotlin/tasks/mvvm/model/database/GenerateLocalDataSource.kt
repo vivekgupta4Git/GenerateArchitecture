@@ -18,10 +18,8 @@ import org.gradle.api.tasks.TaskProvider
 import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
-import utils.TaskUtil.capitalizeFirstChar
 import utils.TaskUtil.getExtension
 import utils.TaskUtil.lowerFirstChar
-import utils.TaskUtil.makeGoodName
 import utils.TaskUtil.modifyPackageName
 import java.io.File
 
@@ -38,10 +36,10 @@ abstract class GenerateLocalDataSource : OptionTask() {
                 .get()
                 .parameters.packageName
                 .get()
-        val mvvmSubPath =
+        val domainName =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.domainName
                 .get()
         val projectDir = File(projectPath)
         val extension = getExtension(project)
@@ -59,15 +57,15 @@ abstract class GenerateLocalDataSource : OptionTask() {
 
         // write entity model
         val entityPackageName = "$modifiedPackage.entities"
-        val entityName = "${mvvmSubPath.makeGoodName()}Entity"
+        val entityName = "${domainName}Entity"
         // write dao
         val daoPackageName = "$modifiedPackage.dao"
-        val daoName = "${mvvmSubPath.makeGoodName()}Dao"
+        val daoName = "${domainName}Dao"
 
         val dataSourcePackageName = "$modifiedPackage.dataSources"
 
         // write local source
-        val localDataSourceName = "${mvvmSubPath.makeGoodName()}LocalDataSource"
+        val localDataSourceName = "${domainName}LocalDataSource"
         val localDependency = DependencyClass(daoPackageName, daoName)
         val localDomainModel = DependencyClass(entityPackageName, entityName)
         projectDir.writeDataSource(
@@ -75,7 +73,7 @@ abstract class GenerateLocalDataSource : OptionTask() {
             dataSourceName = localDataSourceName,
             dependency = localDependency,
             domainModel = localDomainModel,
-            mvvmSubPath = mvvmSubPath,
+            domainName = domainName,
         )
     }
 
@@ -84,22 +82,8 @@ abstract class GenerateLocalDataSource : OptionTask() {
         dataSourceName: String,
         dependency: DependencyClass,
         domainModel: DependencyClass,
-        mvvmSubPath: String,
+        domainName: String,
     ) {
-        val returnType =
-            Flow::class.asClassName().parameterizedBy(
-                List::class.asClassName().parameterizedBy(
-                    ClassName(domainModel.packageName, domainModel.className),
-                ),
-            )
-
-        val funSpec =
-            FunSpec
-                .builder("getAll${domainModel.className.capitalizeFirstChar()}")
-                .returns(returnType)
-
-        val finalFunSpec = funSpec.addLocalDataSourceStatements(dependency, mvvmSubPath)
-
         val fileSpec =
             FileSpec
                 .builder(dataSourcePackageName, dataSourceName)
@@ -124,18 +108,135 @@ abstract class GenerateLocalDataSource : OptionTask() {
                                 ).initializer(dependency.className.lowerFirstChar())
                                 .addModifiers(KModifier.PRIVATE)
                                 .build(),
-                        ).addFunction(
-                            finalFunSpec
-                                .build(),
-                        ).build(),
+                        ).addFunction(getAll(domainName, domainModel, dependency))
+                        .addFunction(insert(domainName, domainModel, dependency))
+                        .addFunction(update(domainName, domainModel, dependency))
+                        .addFunction(delete(domainName, domainModel, dependency))
+                        .addFunction(insertAll(domainName, domainModel, dependency))
+                        .addFunction(getById(domainName, domainModel, dependency))
+                        .build(),
                 ).build()
         fileSpec.writeTo(this)
     }
 
-    private fun FunSpec.Builder.addLocalDataSourceStatements(
+    private fun getById(
+        domainName: String,
+        domainModel: DependencyClass,
         dependency: DependencyClass,
-        mvvmSubPath: String,
-    ) = this.addStatement("return  ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
+    ): FunSpec  {
+        val returnType = ClassName(domainModel.packageName, domainModel.className).copy(nullable = true)
+        val daoMethod = "get${domainName}ById"
+        return FunSpec
+            .builder(daoMethod)
+            .addParameter(ParameterSpec.builder("id", String::class).build())
+            .returns(returnType)
+            .addStatement("return ${dependency.className.lowerFirstChar()}.$daoMethod(id)")
+            .build()
+    }
+
+    private fun getAll(
+        domainName: String,
+        domainModel: DependencyClass,
+        dependency: DependencyClass,
+    ): FunSpec {
+        val returnType =
+            Flow::class.asClassName().parameterizedBy(
+                List::class.asClassName().parameterizedBy(
+                    ClassName(domainModel.packageName, domainModel.className),
+                ),
+            )
+
+        return FunSpec
+            .builder("getAll$domainName")
+            .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll$domainName()")
+            .returns(returnType)
+            .build()
+    }
+
+    private fun insertAll(
+        domainName: String,
+        domainModel: DependencyClass,
+        dependency: DependencyClass,
+    ): FunSpec {
+        val variableName = domainModel.className.lowerFirstChar()
+        val daoMethod = "insertAll$domainName"
+        return FunSpec
+            .builder(daoMethod) // same name as dao method
+            .addParameter(
+                ParameterSpec
+                    .builder(
+                        variableName,
+                        ClassName(domainModel.packageName, domainModel.className),
+                    ).addModifiers(KModifier.VARARG)
+                    .build(),
+            ).addStatement(
+                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "(*$variableName)",
+            ).build()
+    }
+
+    private fun insert(
+        domainName: String,
+        domainModel: DependencyClass,
+        dependency: DependencyClass,
+    ): FunSpec {
+        val variableName = domainModel.className.lowerFirstChar()
+        val daoMethod = "insert$domainName"
+        return FunSpec
+            .builder(daoMethod) // same name as dao method
+            .addParameter(
+                ParameterSpec
+                    .builder(
+                        variableName,
+                        ClassName(domainModel.packageName, domainModel.className),
+                    ).build(),
+            ).addStatement(
+                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "($variableName)",
+            ).build()
+    }
+
+    private fun update(
+        domainName: String,
+        domainModel: DependencyClass,
+        dependency: DependencyClass,
+    ): FunSpec {
+        val variableName = domainModel.className.lowerFirstChar()
+        val daoMethod = "update$domainName"
+        return FunSpec
+            .builder(daoMethod) // same name as dao method
+            .addParameter(
+                ParameterSpec
+                    .builder(
+                        variableName,
+                        ClassName(domainModel.packageName, domainModel.className),
+                    ).build(),
+            ).addStatement(
+                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "($variableName)",
+            ).build()
+    }
+
+    private fun delete(
+        domainName: String,
+        domainModel: DependencyClass,
+        dependency: DependencyClass,
+    ): FunSpec {
+        val variableName = domainModel.className.lowerFirstChar()
+        val daoMethod = "delete$domainName"
+        return FunSpec
+            .builder(daoMethod) // same name as dao method
+            .addParameter(
+                ParameterSpec
+                    .builder(
+                        variableName,
+                        ClassName(domainModel.packageName, domainModel.className),
+                    ).build(),
+            ).addStatement(
+                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "($variableName)",
+            ).build()
+    }
 
     companion object {
         fun Project.registerTaskGenerateLocalDataSource(
@@ -149,5 +250,14 @@ abstract class GenerateLocalDataSource : OptionTask() {
                 projectPathService.set(serviceProvider)
                 usesService(serviceProvider)
             }
+
+        private enum class MethodType {
+            INSERT_ALL,
+            INSERT,
+            UPDATE,
+            DELETE,
+            GET_ALL,
+            GET_BY_ID,
+        }
     }
 }

@@ -5,6 +5,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.options.Option
 import service.ProjectPathService
+import utils.TaskUtil.makeGoodName
 
 abstract class OptionTask : DefaultTask() {
     @get:Internal
@@ -19,5 +20,9 @@ abstract class OptionTask : DefaultTask() {
             .get()
             .parameters.mvvmSubPath
             .set(subPath)
+        projectPathService
+            .get()
+            .parameters.domainName
+            .set(subPath.makeGoodName())
     }
 }
