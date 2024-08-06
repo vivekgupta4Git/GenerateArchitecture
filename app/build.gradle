@@ -1,7 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'mvvm'
+    id 'kotlin-kapt'
+    id 'mvvm-arch'
 }
 
 android {
@@ -48,6 +49,10 @@ android {
 }
 
 dependencies {
+    def roomVersion = "2.5.2" //this was 2.5.1 back then
+    implementation "androidx.room:room-ktx:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
@@ -66,18 +71,29 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
+configureMvvm {
+    view{
+        name = "Ui"
+    }
+    model{
+        name = "domain"
+    }
+    viewModel{
+        name = "viewModels"
+    }
+}
+
+/*
 mvvmConfig {
     model {
-        name = "data"
-        subPath = "mysubpath/morenestedpath/"
+        name = "model"
     }
     view {
-        name = "Presentation"
-        subPath = "mysubpath/morenestedpath/"
+        name = "view"
     }
     viewModel {
-        name = "CustomViewModel"
-        subPath = "myViewModel/common/"
+        name = "viewmodel"
     }
 
 }
+*/
