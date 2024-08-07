@@ -1,10 +1,15 @@
 package utils
 
 import architecture.AndroidExtension
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import extension.MvvmConfigurationExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
+import retrofit2.Response
+import tasks.DependencyClass
 import java.util.Locale
 
 object TaskUtil {
@@ -87,4 +92,9 @@ object TaskUtil {
 
         return extension
     }
+
+    fun DependencyClass.wrapInRetrofitResponse() =
+        Response::class.asClassName().parameterizedBy(
+            ClassName(this.packageName, this.className),
+        )
 }
