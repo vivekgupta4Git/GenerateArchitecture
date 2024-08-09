@@ -37,10 +37,10 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .get()
                 .parameters.packageName
                 .get()
-        val mvvmSubPath =
+        val domainName =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.domainName
                 .get()
         val projectDir = File(projectPath)
         val extension = getExtension(project)
@@ -57,14 +57,14 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 )
 
         val networkModelsPackageName = "$modifiedPackage.networkModels"
-        val networkModelClassName = "${mvvmSubPath.makeGoodName()}NetworkModel"
+        val networkModelClassName = "${domainName.makeGoodName()}NetworkModel"
 
-        val restApiName = "${mvvmSubPath.makeGoodName()}RestApi"
+        val restApiName = "${domainName.makeGoodName()}RestApi"
         val restApiPackageName = "$modifiedPackage.restApi"
 
         val dataSourcePackageName = "$modifiedPackage.dataSources"
 
-        val remoteDataSourceName = "${mvvmSubPath.makeGoodName()}RemoteDataSource"
+        val remoteDataSourceName = "${domainName.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
         val remoteDomainModel = DependencyClass(networkModelsPackageName, networkModelClassName)
         projectDir.writeDataSource(
@@ -72,7 +72,7 @@ abstract class GenerateRemoteDataSource : OptionTask() {
             dataSourceName = remoteDataSourceName,
             dependency = remoteDependency,
             domainModel = remoteDomainModel,
-            mvvmSubPath = mvvmSubPath,
+            domainName = domainName,
         )
     }
 
@@ -81,23 +81,8 @@ abstract class GenerateRemoteDataSource : OptionTask() {
         dataSourceName: String,
         dependency: DependencyClass,
         domainModel: DependencyClass,
-        mvvmSubPath: String,
+        domainName: String,
     ) {
-        val returnType =
-            Result::class.asClassName().parameterizedBy(
-                List::class.asClassName().parameterizedBy(
-                    ClassName(domainModel.packageName, domainModel.className),
-                ),
-            )
-
-        val funSpec =
-            FunSpec
-                .builder("getAll${domainModel.className.capitalizeFirstChar()}")
-                .addModifiers(KModifier.SUSPEND)
-                .returns(returnType)
-
-        val finalFunSpec = funSpec.addRemoteDataSourceStatements(dependency, mvvmSubPath)
-
         val fileSpec =
             FileSpec
                 .builder(dataSourcePackageName, dataSourceName)
@@ -111,9 +96,9 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                                     ParameterSpec
                                         .builder(
                                             dependency.className.lowerFirstChar(),
-                                            ClassName(dependency.packageName, dependency.className),
-                                        ).build(),
-                                ).build(),
+                                            ClassName(dependency.packageName, dependency.className)
+                                        ).build()
+                                ).build()
                         ).addProperty(
                             PropertySpec
                                 .builder(
@@ -122,23 +107,147 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                                 ).initializer(dependency.className.lowerFirstChar())
                                 .addModifiers(KModifier.PRIVATE)
                                 .build(),
-                        ).addFunction(
-                            finalFunSpec
-                                .build(),
-                        ).build(),
+                        ).addFunction(getAll(dependency, domainModel, domainName))
+                        .addFunction(getById(dependency, domainModel, domainName))
+                        .addFunction(insert(dependency, domainModel, domainName))
+                        .addFunction(delete(dependency, domainModel, domainName))
+                        .addFunction(update(dependency, domainModel, domainName))
+                        .build()
+
                 ).build()
         fileSpec.writeTo(this)
     }
-
-    private fun FunSpec.Builder.addRemoteDataSourceStatements(
+    private fun getById(
         dependency: DependencyClass,
-        mvvmSubPath: String,
-    ) = this
-        .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${mvvmSubPath.makeGoodName()}()")
-        .beginControlFlow("return if(result.isSuccessful && result.body() != null)")
-        .addStatement("Result.success(result.body()!!)")
+        domainModel: DependencyClass,
+        domainName: String,
+    ) : FunSpec{
+        val returnType =
+            Result::class.asClassName().parameterizedBy(
+                ClassName(domainModel.packageName, domainModel.className),
+            )
+        val funSpec = FunSpec.builder("get${domainName.capitalizeFirstChar()}ById")
+            .addModifiers(KModifier.SUSPEND)
+            .addParameter(ParameterSpec.builder("id", String::class).build())
+            .returns(returnType)
+        return  funSpec
+            .addStatement("val result = ${dependency.className.lowerFirstChar()}.get${domainName.makeGoodName()}ById(id)")
+            .commonControlFlow()
+            .build()
+    }
+    private fun getAll(
+        dependency: DependencyClass,
+        domainModel: DependencyClass,
+        domainName: String,
+    ) : FunSpec{
+        val returnType =
+            Result::class.asClassName().parameterizedBy(
+                List::class.asClassName().parameterizedBy(
+                    ClassName(domainModel.packageName, domainModel.className),
+                ),
+            )
+
+        val funSpec =
+            FunSpec
+                .builder("getAll${domainName.capitalizeFirstChar()}")
+                .addModifiers(KModifier.SUSPEND)
+                .returns(returnType)
+
+        return funSpec
+            .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${domainName.makeGoodName()}()")
+            .commonControlFlow().build()
+    }
+
+    private fun insert(
+        dependency: DependencyClass,
+        domainModel: DependencyClass,
+        domainName: String
+    ) : FunSpec{
+        val returnType =
+            Result::class.asClassName().parameterizedBy(
+                    ClassName(domainModel.packageName, domainModel.className),
+            )
+
+        val funSpec =
+            FunSpec
+                .builder("insert${domainName.capitalizeFirstChar()}")
+                .addModifiers(KModifier.SUSPEND)
+                .addParameter(ParameterSpec
+                    .builder(
+                        domainModel.className.lowerFirstChar(),
+                        ClassName(domainModel.packageName,domainModel.className)
+                    ).build())
+                .returns(returnType)
+
+        return funSpec
+            .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
+                    ".insert${domainName.makeGoodName()}(${domainModel.className.lowerFirstChar()})")
+            .commonControlFlow().build()
+    }
+    private fun delete(
+        dependency: DependencyClass,
+        domainModel: DependencyClass,
+        domainName: String
+    ) : FunSpec
+    {
+        val returnType =
+            Result::class.asClassName().parameterizedBy(
+                ClassName(domainModel.packageName, domainModel.className),
+            )
+
+        val funSpec =
+            FunSpec
+                .builder("delete${domainName.capitalizeFirstChar()}")
+                .addModifiers(KModifier.SUSPEND)
+                .addParameter(ParameterSpec.builder("id", String::class).build())
+
+                .returns(returnType)
+
+        return funSpec
+            .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
+                    ".delete${domainName.makeGoodName()}(id)")
+            .commonControlFlow().build()
+    }
+    private fun update(
+        dependency: DependencyClass,
+        domainModel: DependencyClass,
+        domainName: String
+    ) : FunSpec
+    {
+        val returnType =
+            Result::class.asClassName().parameterizedBy(
+                ClassName(domainModel.packageName, domainModel.className),
+            )
+
+        val funSpec =
+            FunSpec
+                .builder("update${domainName.capitalizeFirstChar()}")
+                .addModifiers(KModifier.SUSPEND)
+                .addParameter(ParameterSpec.builder("id", String::class).build())
+                .addParameter(ParameterSpec
+                    .builder(
+                        domainModel.className.lowerFirstChar(),
+                        ClassName(domainModel.packageName,domainModel.className)
+                    ).build())
+                .returns(returnType)
+
+        return funSpec
+            .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
+                    ".update${domainName.makeGoodName()}(id,${domainModel.className.lowerFirstChar()})")
+            .commonControlFlow().build()
+    }
+
+
+    private fun FunSpec.Builder.commonControlFlow() = this
+        .beginControlFlow("return if(result.isSuccessful)")
+        .addStatement("val body = result.body()")
+        .beginControlFlow("if(body != null)")
+        .addStatement("Result.success(body)")
         .nextControlFlow("else")
-        .addStatement("Result.failure(Throwable(%S))", "Unable to fetch")
+        .addStatement("Result.failure(Throwable(%S))", "response body is empty/null")
+        .endControlFlow()
+        .nextControlFlow("else")
+        .addStatement("Result.failure(${ClassName("retrofit2", "HttpException")}(result))")
         .endControlFlow()
 
     companion object {
