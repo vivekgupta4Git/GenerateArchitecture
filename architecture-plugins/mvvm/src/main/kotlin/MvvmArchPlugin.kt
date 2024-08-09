@@ -9,6 +9,7 @@ import tasks.mvvm.model.database.GenerateDaoSourceFile.Companion.registerTaskGen
 import tasks.mvvm.model.database.GenerateEntityModelSourceFile.Companion.registerTaskGenerateEntityModels
 import tasks.mvvm.model.database.GenerateLocalDataSource.Companion.registerTaskGenerateLocalDataSource
 import tasks.mvvm.model.domain.GenerateDomainModelSourceFile.Companion.registerTaskGenerateDomainModels
+import tasks.mvvm.model.dto.GenerateDtoSourceFile.Companion.registerTaskEntityToDomainModel
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
 import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskGenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
@@ -41,6 +42,7 @@ class MvvmArchPlugin : Plugin<Project> {
             registerTaskGenerateDao(serviceProvider)
             registerTaskGenerateRemoteDataSource(serviceProvider)
             registerTaskGenerateLocalDataSource(serviceProvider)
+            registerTaskEntityToDomainModel(serviceProvider)
         }
     }
 }
