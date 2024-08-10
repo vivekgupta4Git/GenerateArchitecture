@@ -62,7 +62,10 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
         val domainModelsPackageName = "$modifiedPackage.domainModels"
         val domainModelClassName = "${domainName}Model"
         val repositoryPackageName = "$modifiedPackage.repository"
-        val repositoryClassName = "${domainName}Repository"
+
+        val repositoryInterfaceName = "${domainName}Repository"
+
+        val repositoryClassName = "${domainName}RepositoryImpl"
         val dataSourcePackageName = "$modifiedPackage.dataSources"
 
         val remoteDataSourceName = "${domainName}RemoteDataSource"
@@ -73,6 +76,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
 
         val dtoPackageName = "$modifiedPackage.dto"
         projectDir.writeRepositoryClass(
+            repositoryInterfaceName = repositoryInterfaceName,
             domainName = domainName,
             packageName = repositoryPackageName,
             className = repositoryClassName,
@@ -85,6 +89,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
     }
 
     private fun File.writeRepositoryClass(
+        repositoryInterfaceName : String,
         domainName: String,
         packageName: String,
         className: String,
@@ -102,6 +107,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             .addImport(dtoPackageName, "toList${entityDependency.className}")
             .addType(
                 TypeSpec.classBuilder(className)
+                    .addSuperinterface(ClassName(packageName,repositoryInterfaceName))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
                             .addParameter(
@@ -159,6 +165,15 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
                             entityDependency = entityDependency
                         )
                     )
+                    .addFunction(
+                        getById(
+                            domainName = domainName,
+                            domainDependency = domainDependency,
+                            remoteDependency = remoteSourceDependency,
+                            localDependency = localSourceDependency,
+                            entityDependency = entityDependency
+                        )
+                    )
                     .build()
             )
             .build()
@@ -180,20 +195,38 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             )
         )
         return FunSpec.builder("getAll${domainName}")
+            .addModifiers(KModifier.OVERRIDE)
             .returns(returnType)
-            .beginControlFlow("return flow<Result<List<${domainDependency.className}>>>")
-            .addStatement("emitAll(${localDependency.className.lowerFirstChar()}.getAll${domainName}()")
-            .addStatement(".map { Result.success(it.toList${domainDependency.className}()) })")
-            .addStatement("val remoteData = ${remoteDependency.className.lowerFirstChar()}.getAll${domainName}()")
+            .beginControlFlow("return flow<Result<List<${domainDependency.className}>>> \n")
+            .addStatement("\temitAll(${localDependency.className.lowerFirstChar()}.getAll${domainName}()")
+            .addStatement("·\t\t.map { Result.success(it.toList${domainDependency.className}()) })")
+            .addStatement("\n${remoteDependency.className.lowerFirstChar()}.getAll${domainName}()")
             .addStatement(
-                "remoteData.onSuccess { ${localDependency.className.lowerFirstChar()}" +
-                        ".insertAll${domainName}(*it.toList${entityDependency.className}().toTypedArray()) }"
+                "\t.onSuccess {· \n\t\t${localDependency.className.lowerFirstChar()}" +
+                        ".insertAll${domainName}(*it\n\t\t\t.toList${entityDependency.className}()\n\t\t\t.toTypedArray()) \n}"
             )
-            .addStatement(".onFailure { emit(Result.failure(it)) }")
+            .addStatement("\t.onFailure { emit(Result.failure(it)) }")
             .endControlFlow()
-            .addCode(".%M()", MemberName("kotlinx.coroutines.flow", "distinctUntilChanged"))
+            .addCode("·.%M()", MemberName("kotlinx.coroutines.flow", "distinctUntilChanged"))
             .build()
-
+    }
+    private fun getById(
+        domainName: String,
+        domainDependency: DependencyClass,
+        remoteDependency: DependencyClass,
+        localDependency: DependencyClass,
+        entityDependency: DependencyClass
+    ) : FunSpec{
+        val returnType = Result::class.asClassName().parameterizedBy(
+            ClassName(domainDependency.packageName, domainDependency.className)
+        )
+        return FunSpec.builder("get${domainName}ById")
+            .addModifiers(KModifier.SUSPEND)
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter("id", String::class)
+            .returns(returnType)
+            .addStatement("return Result.failure(Throwable(\"Not Implemented\"))")
+            .build()
 
     }
 
@@ -206,6 +239,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_LOCAL_DATA_SOURCE)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_REMOTE_DATA_SOURCE)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_DTO)
+                dependsOn(MvvmPluginConstant.TASK_GENERATE_REPOSITORY_INTERFACE)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_REPOSITORY_DESCRIPTION
 

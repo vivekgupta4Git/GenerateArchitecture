@@ -13,6 +13,7 @@ import tasks.mvvm.model.dto.GenerateDtoSourceFile.Companion.registerTaskEntityTo
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile.Companion.registerTaskGenerateNetworkModels
 import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskGenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
+import tasks.mvvm.model.repository.GenerateRepositoryInterface.Companion.registerTaskGenerateRepositoryInterface
 import tasks.mvvm.model.repository.GenerateRepositorySourceFile.Companion.registerTaskGenerateRepository
 import utils.TaskUtil.makeGoodName
 
@@ -44,6 +45,7 @@ class MvvmArchPlugin : Plugin<Project> {
             registerTaskGenerateRemoteDataSource(serviceProvider)
             registerTaskGenerateLocalDataSource(serviceProvider)
             registerTaskEntityToDomainModel(serviceProvider)
+            registerTaskGenerateRepositoryInterface(serviceProvider)
             registerTaskGenerateRepository(serviceProvider)
         }
     }

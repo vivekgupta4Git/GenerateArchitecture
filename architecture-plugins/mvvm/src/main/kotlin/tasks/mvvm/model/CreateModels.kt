@@ -16,6 +16,7 @@ import tasks.mvvm.model.dto.GenerateDtoSourceFile
 import tasks.mvvm.model.network.GenerateNetworkModelSourceFile
 import tasks.mvvm.model.network.GenerateRemoteDataSource
 import tasks.mvvm.model.network.GenerateRestApiSourceFile
+import tasks.mvvm.model.repository.GenerateRepositoryInterface
 import tasks.mvvm.model.repository.GenerateRepositorySourceFile
 
 abstract class CreateModels : OptionTask() {
@@ -41,6 +42,7 @@ abstract class CreateModels : OptionTask() {
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_REMOTE_DATA_SOURCE, GenerateRemoteDataSource::class).action()
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_LOCAL_DATA_SOURCE, GenerateLocalDataSource::class).action()
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_DTO, GenerateDtoSourceFile::class).action()
+        project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_REPOSITORY_INTERFACE, GenerateRepositoryInterface::class).action()
         project.tasks.getByName(MvvmPluginConstant.TASK_GENERATE_REPOSITORY, GenerateRepositorySourceFile::class).action()
     }
 
