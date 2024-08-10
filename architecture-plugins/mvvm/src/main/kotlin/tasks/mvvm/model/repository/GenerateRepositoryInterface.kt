@@ -17,6 +17,7 @@ import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
 import utils.TaskUtil.getExtension
+import utils.TaskUtil.lowerFirstChar
 import utils.TaskUtil.modifyPackageName
 import java.io.File
 
@@ -82,6 +83,9 @@ abstract class GenerateRepositoryInterface  : OptionTask(){
                 TypeSpec.interfaceBuilder(className)
                     .addFunction(getAll(domainName, domainDependency))
                     .addFunction(getById(domainName,domainDependency))
+                    .addFunction(insert(domainName,domainDependency))
+                    .addFunction(update(domainName,domainDependency))
+                    .addFunction(delete(domainName,domainDependency))
                     .build()
             )
             .build()
@@ -119,6 +123,58 @@ abstract class GenerateRepositoryInterface  : OptionTask(){
             .addModifiers(KModifier.SUSPEND)
             .returns(returnType)
             .build()
+    }
+
+    private fun insert(
+        domainName: String,
+        domainDependency: DependencyClass
+    ): FunSpec{
+       val returnType = Result::class.asClassName().parameterizedBy(
+           String::class.asClassName()
+       )
+       return FunSpec.builder("insert${domainName}")
+           .addParameter(
+               ParameterSpec.builder(domainName.lowerFirstChar(),ClassName(domainDependency.packageName, domainDependency.className))
+                   .build()
+           )
+           .returns(returnType)
+           .addModifiers(KModifier.ABSTRACT)
+           .addModifiers(KModifier.SUSPEND)
+           .build()
+    }
+    private fun update(
+        domainName: String,
+        domainDependency: DependencyClass
+    ): FunSpec{
+       val returnType = Result::class.asClassName().parameterizedBy(
+           String::class.asClassName()
+       )
+       return FunSpec.builder("update${domainName}")
+           .addParameter(
+               ParameterSpec.builder(domainName.lowerFirstChar(),ClassName(domainDependency.packageName, domainDependency.className))
+                   .build()
+           )
+           .returns(returnType)
+           .addModifiers(KModifier.ABSTRACT)
+           .addModifiers(KModifier.SUSPEND)
+           .build()
+    }
+    private fun delete(
+        domainName: String,
+        domainDependency: DependencyClass
+    ): FunSpec{
+       val returnType = Result::class.asClassName().parameterizedBy(
+           String::class.asClassName()
+       )
+       return FunSpec.builder("delete${domainName}")
+           .addParameter(
+               ParameterSpec.builder(domainName.lowerFirstChar(),ClassName(domainDependency.packageName, domainDependency.className))
+                   .build()
+           )
+           .returns(returnType)
+           .addModifiers(KModifier.ABSTRACT)
+           .addModifiers(KModifier.SUSPEND)
+           .build()
     }
 
 

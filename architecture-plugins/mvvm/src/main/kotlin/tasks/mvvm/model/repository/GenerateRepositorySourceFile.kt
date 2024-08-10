@@ -75,6 +75,8 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
         val entityName = "${domainName}Entity"
 
         val dtoPackageName = "$modifiedPackage.dto"
+        val networkModelPackageName = "$modifiedPackage.networkModels"
+        val networkModelName = "${domainName}NetworkModel"
         projectDir.writeRepositoryClass(
             repositoryInterfaceName = repositoryInterfaceName,
             domainName = domainName,
@@ -84,12 +86,13 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             localSourceDependency = DependencyClass(dataSourcePackageName, localDataSourceName),
             domainDependency = DependencyClass(domainModelsPackageName, domainModelClassName),
             entityDependency = DependencyClass(entityPackageName, entityName),
-            dtoPackageName = dtoPackageName
+            dtoPackageName = dtoPackageName,
+            networkModelDependency = DependencyClass(networkModelPackageName, networkModelName)
         )
     }
 
     private fun File.writeRepositoryClass(
-        repositoryInterfaceName : String,
+        repositoryInterfaceName: String,
         domainName: String,
         packageName: String,
         className: String,
@@ -97,7 +100,8 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
         localSourceDependency: DependencyClass,
         domainDependency: DependencyClass,
         entityDependency: DependencyClass,
-        dtoPackageName: String
+        dtoPackageName: String,
+        networkModelDependency: DependencyClass
     ) {
         FileSpec.builder(packageName, className)
             .addImport("kotlinx.coroutines.flow", "flow")
@@ -105,9 +109,14 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             .addImport("kotlinx.coroutines.flow", "map")
             .addImport(dtoPackageName, "toList${domainDependency.className}")
             .addImport(dtoPackageName, "toList${entityDependency.className}")
+            .addImport(dtoPackageName, "to${entityDependency.className}")
+            .addImport(dtoPackageName, "to${domainDependency.className}")
+            .addImport(dtoPackageName, "to${networkModelDependency.className}")
+            .addImport(dtoPackageName, "to${entityDependency.className}")
+            .addImport(dtoPackageName, "to${networkModelDependency.className}")
             .addType(
                 TypeSpec.classBuilder(className)
-                    .addSuperinterface(ClassName(packageName,repositoryInterfaceName))
+                    .addSuperinterface(ClassName(packageName, repositoryInterfaceName))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
                             .addParameter(
@@ -174,6 +183,35 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
                             entityDependency = entityDependency
                         )
                     )
+                    .addFunction(
+                        insert(
+                            domainName = domainName,
+                            domainDependency = domainDependency,
+                            remoteDependency = remoteSourceDependency,
+                            localDependency = localSourceDependency,
+                            entityDependency = entityDependency,
+                            networkModelDependency = networkModelDependency
+                        )
+                    )
+                    .addFunction(
+                        update(
+                            domainName = domainName,
+                            domainDependency = domainDependency,
+                            remoteDependency = remoteSourceDependency,
+                            localDependency = localSourceDependency,
+                            entityDependency = entityDependency,
+                            networkModelDependency = networkModelDependency
+                        )
+                    )
+                    .addFunction(
+                        delete(
+                            domainName = domainName,
+                            domainDependency = domainDependency,
+                            remoteDependency = remoteSourceDependency,
+                            localDependency = localSourceDependency,
+                            entityDependency = entityDependency,
+                        )
+                    )
                     .build()
             )
             .build()
@@ -210,13 +248,25 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             .addCode("·.%M()", MemberName("kotlinx.coroutines.flow", "distinctUntilChanged"))
             .build()
     }
+
+    /*
+       featureRemoteDataSource.getFeatureById(id).onSuccess { data ->
+          featureLocalDataSource.insertFeature(data.toFeatureEntity())
+      }
+
+      featureLocalDataSource.getFeatureById(id)?.let {
+          return Result.success(it.toFeatureModel())
+      }
+
+      return Result.failure(Throwable(""))
+     */
     private fun getById(
         domainName: String,
         domainDependency: DependencyClass,
         remoteDependency: DependencyClass,
         localDependency: DependencyClass,
         entityDependency: DependencyClass
-    ) : FunSpec{
+    ): FunSpec {
         val returnType = Result::class.asClassName().parameterizedBy(
             ClassName(domainDependency.packageName, domainDependency.className)
         )
@@ -225,7 +275,167 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("id", String::class)
             .returns(returnType)
-            .addStatement("return Result.failure(Throwable(\"Not Implemented\"))")
+            .addCode(
+                """
+                ${remoteDependency.className.lowerFirstChar()}.get${domainName}ById(id).onSuccess { data ->
+                    ${localDependency.className.lowerFirstChar()}.insert${domainName}(data.to${entityDependency.className}())
+                }
+                
+                ${localDependency.className.lowerFirstChar()}.get${domainName}ById(id)?.let {
+                    return Result.success(it.to${domainDependency.className}())
+                }
+            """.trimIndent()
+            )
+            .addStatement("\nreturn Result.failure(Throwable(\"Not Found\"))")
+            .build()
+
+    }
+
+    private fun insert(
+        domainName: String,
+        domainDependency: DependencyClass,
+        remoteDependency: DependencyClass,
+        localDependency: DependencyClass,
+        entityDependency: DependencyClass,
+        networkModelDependency: DependencyClass
+    ): FunSpec {
+        /*
+        val result =
+              featureRemoteDataSource.insertFeature(feature.toFeatureEntity().toFeatureNetworkModel())
+          return if (result.isSuccess) {
+              result.getOrNull()?.let {
+                  featureLocalDataSource.insertFeature(it.toFeatureEntity())
+              }
+              Result.success("inserted Successfully")
+          } else {
+              Result.failure(result.exceptionOrNull()!!)
+          }
+         */
+        return FunSpec.builder("insert${domainName}")
+            .addModifiers(KModifier.SUSPEND)
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter(
+                ParameterSpec.builder(
+                    domainName.lowerFirstChar(),
+                    ClassName(domainDependency.packageName, domainDependency.className)
+                )
+                    .build()
+            )
+            .returns(Result::class.asClassName().parameterizedBy(String::class.asClassName()))
+            .addStatement(
+                """
+                val result = ${remoteDependency.className.lowerFirstChar()}
+                        .insert${domainName}(${domainName.lowerFirstChar()}
+                                        .to${entityDependency.className}().to${networkModelDependency.className}())
+
+           """.trimIndent()
+            )
+            .addStatement("return if (result.isSuccess) {")
+            .addStatement("	result.getOrNull()?.let {")
+            .addStatement("		${localDependency.className.lowerFirstChar()}.insert${domainName}(it.to${entityDependency.className}())")
+            .addStatement("	}")
+            .addStatement("	Result.success(%S)", "Inserted Successfully")
+            .addStatement("} else {")
+            .addStatement("	Result.failure(Throwable(result.exceptionOrNull()))")
+            .addStatement("}")
+            .build()
+
+    }
+
+    private fun update(
+        domainName: String,
+        domainDependency: DependencyClass,
+        remoteDependency: DependencyClass,
+        localDependency: DependencyClass,
+        entityDependency: DependencyClass,
+        networkModelDependency: DependencyClass
+    ): FunSpec {
+        /*
+        val result =
+              featureRemoteDataSource.updateFeature(feature.toFeatureEntity().toFeatureNetworkModel())
+          return if (result.isSuccess) {
+              result.getOrNull()?.let {
+                  featureLocalDataSource.updateFeature(it.toFeatureEntity())
+              }
+              Result.success("updated Successfully")
+          } else {
+              Result.failure(Throwable(result.exceptionOrNull()))
+          }
+         */
+        return FunSpec.builder("update${domainName}")
+            .addModifiers(KModifier.SUSPEND)
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter(
+                ParameterSpec.builder(
+                    domainName.lowerFirstChar(),
+                    ClassName(domainDependency.packageName, domainDependency.className)
+                )
+                    .build()
+            )
+            .returns(Result::class.asClassName().parameterizedBy(String::class.asClassName()))
+            .addStatement(
+                """
+                val result = ${remoteDependency.className.lowerFirstChar()}.update${domainName}(
+                                    ${domainName.lowerFirstChar()}.id,
+                                    ${domainName.lowerFirstChar()}.to${entityDependency.className}().to${networkModelDependency.className}()
+                )
+           """.trimIndent()
+            )
+            .addStatement("return if (result.isSuccess) {")
+            .addStatement("	result.getOrNull()?.let {")
+            .addStatement("		${localDependency.className.lowerFirstChar()}.update${domainName}(it.to${entityDependency.className}())")
+            .addStatement("	}")
+            .addStatement("	Result.success(%S)", "Updated Successfully")
+            .addStatement("} else {")
+            .addStatement("	Result.failure(Throwable(result.exceptionOrNull()))")
+            .addStatement("}")
+            .build()
+
+    }
+
+    private fun delete(
+        domainName: String,
+        domainDependency: DependencyClass,
+        remoteDependency: DependencyClass,
+        localDependency: DependencyClass,
+        entityDependency: DependencyClass,
+    ): FunSpec {
+        /*
+        val result =
+              featureRemoteDataSource.deleteFeature(feature.toFeatureEntity().toFeatureNetworkModel())
+          return if (result.isSuccess) {
+              result.getOrNull()?.let {
+                  featureLocalDataSource.deleteFeature(it.toFeatureEntity())
+              }
+              Result.success("deleted Successfully")
+          } else {
+              Result.failure(Throwable(result.exceptionOrNull()))
+          }
+         */
+        return FunSpec.builder("delete${domainName}")
+            .addModifiers(KModifier.SUSPEND)
+            .addModifiers(KModifier.OVERRIDE)
+            .addParameter(
+                ParameterSpec.builder(
+                    domainName.lowerFirstChar(),
+                    ClassName(domainDependency.packageName, domainDependency.className)
+                )
+                    .build()
+            )
+            .returns(Result::class.asClassName().parameterizedBy(String::class.asClassName()))
+            .addStatement(
+                """
+                val result = ${remoteDependency.className.lowerFirstChar()}.delete${domainName}(${domainName.lowerFirstChar()}.id)
+           """.trimIndent()
+            )
+            .addStatement("return if (result.isSuccess) {")
+            .addStatement("	result.getOrNull()?.let {")
+            .addStatement("		${localDependency.className.lowerFirstChar()}.delete${domainName}(it.to${entityDependency.className}())")
+            .addStatement("	}")
+            .addStatement("	Result.success(%S)", "Deleted Successfully")
+            .addStatement("} else {")
+            .addStatement("	Result.failure(Throwable(result.exceptionOrNull()))")
+            .addStatement("}")
             .build()
 
     }
