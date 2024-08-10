@@ -37,4 +37,7 @@ object MvvmPluginConstant {
 
     const val TASK_GENERATE_DTO = "generateDto"
     const val TASK_GENERATE_DTO_ENTITY_DESCRIPTION : String = "This task generates dto from entity model class to domain model class"
+
+    const val TASK_GENERATE_REPOSITORY = "generateRepository"
+    const val TASK_GENERATE_REPOSITORY_DESCRIPTION: String = "This task generates repository"
 }

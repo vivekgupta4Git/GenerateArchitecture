@@ -86,6 +86,7 @@ abstract class GenerateRemoteDataSource : OptionTask() {
         val fileSpec =
             FileSpec
                 .builder(dataSourcePackageName, dataSourceName)
+                .addImport("kotlinx.coroutines","withContext")
                 .addType(
                     TypeSpec
                         .classBuilder(dataSourceName)
@@ -98,7 +99,14 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                                             dependency.className.lowerFirstChar(),
                                             ClassName(dependency.packageName, dependency.className)
                                         ).build()
-                                ).build()
+                                )
+                                .addParameter(
+                                    ParameterSpec.builder("dispatcher",
+                                        ClassName("kotlinx.coroutines","CoroutineDispatcher"))
+                                        .defaultValue( "${ClassName("kotlinx.coroutines","Dispatchers.IO")}")
+                                        .build()
+                                )
+                                .build()
                         ).addProperty(
                             PropertySpec
                                 .builder(
@@ -107,7 +115,15 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                                 ).initializer(dependency.className.lowerFirstChar())
                                 .addModifiers(KModifier.PRIVATE)
                                 .build(),
-                        ).addFunction(getAll(dependency, domainModel, domainName))
+                        )
+                        .addProperty(
+                            PropertySpec.builder("dispatcher",
+                                ClassName("kotlinx.coroutines","CoroutineDispatcher"))
+                                .initializer("dispatcher")
+                                .addModifiers(KModifier.PRIVATE)
+                                .build()
+                        )
+                        .addFunction(getAll(dependency, domainModel, domainName))
                         .addFunction(getById(dependency, domainModel, domainName))
                         .addFunction(insert(dependency, domainModel, domainName))
                         .addFunction(delete(dependency, domainModel, domainName))
@@ -131,8 +147,10 @@ abstract class GenerateRemoteDataSource : OptionTask() {
             .addParameter(ParameterSpec.builder("id", String::class).build())
             .returns(returnType)
         return  funSpec
+            .beginControlFlow("return withContext(dispatcher)")
             .addStatement("val result = ${dependency.className.lowerFirstChar()}.get${domainName.makeGoodName()}ById(id)")
             .commonControlFlow()
+            .endControlFlow()
             .build()
     }
     private fun getAll(
@@ -154,8 +172,11 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .returns(returnType)
 
         return funSpec
+            .beginControlFlow("return withContext(dispatcher)")
             .addStatement("val result = ${dependency.className.lowerFirstChar()}.getAll${domainName.makeGoodName()}()")
-            .commonControlFlow().build()
+            .commonControlFlow()
+            .endControlFlow()
+            .build()
     }
 
     private fun insert(
@@ -180,9 +201,12 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .returns(returnType)
 
         return funSpec
+            .beginControlFlow("return withContext(dispatcher)")
             .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
                     ".insert${domainName.makeGoodName()}(${domainModel.className.lowerFirstChar()})")
-            .commonControlFlow().build()
+            .commonControlFlow()
+            .endControlFlow()
+            .build()
     }
     private fun delete(
         dependency: DependencyClass,
@@ -204,9 +228,12 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .returns(returnType)
 
         return funSpec
+            .beginControlFlow("return withContext(dispatcher)")
             .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
                     ".delete${domainName.makeGoodName()}(id)")
-            .commonControlFlow().build()
+            .commonControlFlow()
+            .endControlFlow()
+            .build()
     }
     private fun update(
         dependency: DependencyClass,
@@ -232,14 +259,17 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                 .returns(returnType)
 
         return funSpec
+            .beginControlFlow("return withContext(dispatcher)")
             .addStatement("val result = ${dependency.className.lowerFirstChar()}" +
                     ".update${domainName.makeGoodName()}(id,${domainModel.className.lowerFirstChar()})")
-            .commonControlFlow().build()
+            .commonControlFlow()
+            .endControlFlow()
+            .build()
     }
 
 
     private fun FunSpec.Builder.commonControlFlow() = this
-        .beginControlFlow("return if(result.isSuccessful)")
+        .beginControlFlow("if(result.isSuccessful)")
         .addStatement("val body = result.body()")
         .beginControlFlow("if(body != null)")
         .addStatement("Result.success(body)")

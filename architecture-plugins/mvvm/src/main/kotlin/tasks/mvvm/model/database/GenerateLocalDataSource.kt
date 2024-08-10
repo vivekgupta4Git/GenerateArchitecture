@@ -87,6 +87,8 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val fileSpec =
             FileSpec
                 .builder(dataSourcePackageName, dataSourceName)
+                .addImport("kotlinx.coroutines","withContext")
+                .addImport("kotlinx.coroutines.flow","flowOn")
                 .addType(
                     TypeSpec
                         .classBuilder(dataSourceName)
@@ -99,7 +101,14 @@ abstract class GenerateLocalDataSource : OptionTask() {
                                             dependency.className.lowerFirstChar(),
                                             ClassName(dependency.packageName, dependency.className),
                                         ).build(),
-                                ).build(),
+                                )
+                                .addParameter(
+                                    ParameterSpec.builder("dispatcher",
+                                        ClassName("kotlinx.coroutines","CoroutineDispatcher"))
+                                        .defaultValue( "${ClassName("kotlinx.coroutines","Dispatchers.IO")}")
+                                        .build()
+                                )
+                                .build(),
                         ).addProperty(
                             PropertySpec
                                 .builder(
@@ -108,7 +117,15 @@ abstract class GenerateLocalDataSource : OptionTask() {
                                 ).initializer(dependency.className.lowerFirstChar())
                                 .addModifiers(KModifier.PRIVATE)
                                 .build(),
-                        ).addFunction(getAll(domainName, domainModel, dependency))
+                        )
+                        .addProperty(
+                            PropertySpec.builder("dispatcher",
+                                ClassName("kotlinx.coroutines","CoroutineDispatcher"))
+                                .initializer("dispatcher")
+                                .addModifiers(KModifier.PRIVATE)
+                                .build()
+                        )
+                        .addFunction(getAll(domainName, domainModel, dependency))
                         .addFunction(insert(domainName, domainModel, dependency))
                         .addFunction(update(domainName, domainModel, dependency))
                         .addFunction(delete(domainName, domainModel, dependency))
@@ -129,8 +146,11 @@ abstract class GenerateLocalDataSource : OptionTask() {
         return FunSpec
             .builder(daoMethod)
             .addParameter(ParameterSpec.builder("id", String::class).build())
+            .addModifiers(KModifier.SUSPEND)
             .returns(returnType)
-            .addStatement("return ${dependency.className.lowerFirstChar()}.$daoMethod(id)")
+            .beginControlFlow(" return withContext(dispatcher)")
+            .addStatement(" ${dependency.className.lowerFirstChar()}.$daoMethod(id)")
+            .endControlFlow()
             .build()
     }
 
@@ -148,8 +168,8 @@ abstract class GenerateLocalDataSource : OptionTask() {
 
         return FunSpec
             .builder("getAll$domainName")
-            .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll$domainName()")
             .returns(returnType)
+            .addStatement("return  ${dependency.className.lowerFirstChar()}.getAll$domainName().flowOn(dispatcher)")
             .build()
     }
 
@@ -162,6 +182,7 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val daoMethod = "insertAll$domainName"
         return FunSpec
             .builder(daoMethod) // same name as dao method
+            .addModifiers(KModifier.SUSPEND)
             .addParameter(
                 ParameterSpec
                     .builder(
@@ -169,10 +190,13 @@ abstract class GenerateLocalDataSource : OptionTask() {
                         ClassName(domainModel.packageName, domainModel.className),
                     ).addModifiers(KModifier.VARARG)
                     .build(),
-            ).addStatement(
-                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
-                    "(*$variableName)",
-            ).build()
+            )
+            .beginControlFlow(" return withContext(dispatcher)")
+            .addStatement(
+                " ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "(*$variableName)")
+            .endControlFlow()
+            .build()
     }
 
     private fun insert(
@@ -184,16 +208,20 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val daoMethod = "insert$domainName"
         return FunSpec
             .builder(daoMethod) // same name as dao method
+            .addModifiers(KModifier.SUSPEND)
             .addParameter(
                 ParameterSpec
                     .builder(
                         variableName,
                         ClassName(domainModel.packageName, domainModel.className),
                     ).build(),
-            ).addStatement(
-                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
-                    "($variableName)",
-            ).build()
+            )
+            .beginControlFlow(" return withContext(dispatcher)")
+            .addStatement(
+                " ${dependency.className.lowerFirstChar()}.$daoMethod" +
+                    "($variableName)")
+            .endControlFlow()
+            .build()
     }
 
     private fun update(
@@ -205,16 +233,19 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val daoMethod = "update$domainName"
         return FunSpec
             .builder(daoMethod) // same name as dao method
+            .addModifiers(KModifier.SUSPEND)
             .addParameter(
                 ParameterSpec
                     .builder(
                         variableName,
                         ClassName(domainModel.packageName, domainModel.className),
                     ).build(),
-            ).addStatement(
-                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+            )
+            .beginControlFlow(" return withContext(dispatcher)")
+            .addStatement(
+                " ${dependency.className.lowerFirstChar()}.$daoMethod" +
                     "($variableName)",
-            ).build()
+            ).endControlFlow().build()
     }
 
     private fun delete(
@@ -226,16 +257,19 @@ abstract class GenerateLocalDataSource : OptionTask() {
         val daoMethod = "delete$domainName"
         return FunSpec
             .builder(daoMethod) // same name as dao method
+            .addModifiers(KModifier.SUSPEND)
             .addParameter(
                 ParameterSpec
                     .builder(
                         variableName,
                         ClassName(domainModel.packageName, domainModel.className),
                     ).build(),
-            ).addStatement(
-                "return ${dependency.className.lowerFirstChar()}.$daoMethod" +
+            )
+            .beginControlFlow(" return withContext(dispatcher)")
+            .addStatement(
+                " ${dependency.className.lowerFirstChar()}.$daoMethod" +
                     "($variableName)",
-            ).build()
+            ).endControlFlow().build()
     }
 
     companion object {
@@ -251,13 +285,5 @@ abstract class GenerateLocalDataSource : OptionTask() {
                 usesService(serviceProvider)
             }
 
-        private enum class MethodType {
-            INSERT_ALL,
-            INSERT,
-            UPDATE,
-            DELETE,
-            GET_ALL,
-            GET_BY_ID,
-        }
     }
 }

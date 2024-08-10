@@ -177,7 +177,7 @@ abstract class GenerateDtoSourceFile : OptionTask(){
                     .build()
             )
             .build()
-            fileSpec.writeTo(this)
+       fileSpec.writeTo(this)
     }
     private fun File.writeEntityToNetwork(
         dtoPackageName : String,
