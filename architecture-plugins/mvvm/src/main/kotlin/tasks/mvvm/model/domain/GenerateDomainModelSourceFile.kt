@@ -6,7 +6,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.asClassName
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
@@ -77,17 +77,17 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
                         .primaryConstructor(
                             FunSpec
                                 .constructorBuilder()
-                                .addParameter("id", String::class.asTypeName().copy(nullable = isNullable))
-                                .addParameter("name", String::class.asTypeName().copy(nullable = isNullable))
+                                .addParameter("id", String::class.asClassName().copy(nullable = isNullable))
+                                .addParameter("name", String::class.asClassName().copy(nullable = isNullable))
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("id", String::class.asTypeName().copy(nullable = isNullable))
+                                .builder("id", String::class.asClassName().copy(nullable = isNullable))
                                 .initializer("id")
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("name", String::class.asTypeName().copy(nullable = isNullable))
+                                .builder("name", String::class.asClassName().copy(nullable = isNullable))
                                 .initializer("name")
                                 .build(),
                         ).addSuperIfNullable<Serializable>(isNullable)

@@ -10,7 +10,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.asClassName
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
@@ -85,11 +85,11 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                                         .addAnnotation(
                                             AnnotationSpec.builder(PrimaryKey::class).build(),
                                         ).build(),
-                                ).addParameter("name", String::class.asTypeName().copy(nullable = true))
+                                ).addParameter("name", String::class.asClassName().copy(nullable = true))
                                 .build(),
                         ).addProperty(
                             PropertySpec
-                                .builder("name", String::class.asTypeName().copy(nullable = true))
+                                .builder("name", String::class.asClassName().copy(nullable = true))
                                 .initializer("name")
                                 .build(),
                         ).addProperty(

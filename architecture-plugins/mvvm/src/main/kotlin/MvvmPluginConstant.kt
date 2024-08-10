@@ -8,13 +8,13 @@ object MvvmPluginConstant {
     const val TASK_CREATE_MODELS = "createModels"
     const val TASK_CREATE_MODELS_DESCRIPTION = "This task will generate all source files belongs to m of mvvm"
 
-    const val TASK_GENERATE_DOMAIN_MODELS = "generateDomainModelSourceFile"
+    const val TASK_GENERATE_DOMAIN_MODELS = "generateDomainModel"
     const val TASK_GENERATE_DOMAIN_MODELS_DESCRIPTION = "This task will generate domain model source files"
 
-    const val TASK_GENERATE_NETWORK_MODELS = "generateNetworkModelSourceFile"
+    const val TASK_GENERATE_NETWORK_MODELS = "generateNetworkModel"
     const val TASK_GENERATE_NETWORK_MODELS_DESCRIPTION = "This task will generate network model source files"
 
-    const val TASK_GENERATE_ENTITY_MODELS = "generateEntityModelSourceFile"
+    const val TASK_GENERATE_ENTITY_MODELS = "generateEntityModel"
     const val TASK_GENERATE_ENTITY_MODELS_DESCRIPTION = "This task will generate entity model source files"
 
     const val TASK_GENERATE_REST_API = "generateRestApi"
