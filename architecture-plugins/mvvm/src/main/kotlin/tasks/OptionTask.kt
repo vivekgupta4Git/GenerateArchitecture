@@ -1,15 +1,11 @@
 package tasks
 
-import architecture.AndroidExtension
-import com.android.build.api.dsl.CommonExtension
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.LibraryExtension
+import com.android.build.gradle.BaseExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
-import org.gradle.kotlin.dsl.getByName
 import service.ProjectPathService
 import utils.TaskUtil.makeGoodName
 
@@ -19,19 +15,19 @@ import utils.TaskUtil.makeGoodName
  */
 abstract class OptionTask : DefaultTask() {
     @Internal
-    val androidExtension = project.extensions.getByName("android") as AppExtension
+    val androidExtension = project.extensions.getByName("android") as BaseExtension
 
     @get:Internal
     abstract val projectPathService: Property<ProjectPathService>
 
     @Option(
-        option = "sub-path",
-        description = "generate source files under sub-path",
+        option = "feature",
+        description = "The domain name of the feature to be generated having a mvvm architecture",
     )
-    fun setSubPath(subPath: String) {
+    fun setDomainName(subPath: String) {
         projectPathService
             .get()
-            .parameters.mvvmSubPath
+            .parameters.feature
             .set(subPath)
         projectPathService
             .get()
@@ -51,14 +47,27 @@ abstract class OptionTask : DefaultTask() {
 
     @Option(
         option = "auto-namespace",
-        description = "auto detect namespace for android projects, no need to set it explicitly"
+        description = "This plugin auto detect namespace for android projects but if you prefer to " +
+                "set it explicitly you can use this option by using option --no-auto-namespace and explicitly set the namespace using option --namespace"
     )
     fun setAutoNamespace(detectNamespace: Boolean) {
-
         projectPathService
             .get()
             .parameters.autoNamespace
             .set(detectNamespace)
+    }
+
+    @Option(
+        option = "preferKotlin",
+        description = """ This plugin generates code assuming you have kotlin sourceSets
+    but if you have java sourceSets and you want to generate structure in the java sourceSets you can set this flag to false by
+    using option --no-preferKotlin""",
+    )
+    fun setPreferKotlin(prefer: Boolean) {
+        projectPathService
+            .get()
+            .parameters.useKotlin
+            .set(prefer)
     }
 
 
@@ -80,10 +89,7 @@ abstract class OptionTask : DefaultTask() {
         if(autoNamespace){
             projectPathService.get()
                 .parameters.namespace
-                .set(androidExtension.namespace ?: "default")
+                .set(androidExtension.namespace ?: "")
         }
-
-
-        println("namespace is ${projectPathService.get().parameters.namespace.get()}")
     }
 }

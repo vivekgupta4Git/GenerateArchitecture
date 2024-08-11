@@ -38,7 +38,7 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
         val mvvmSubPath =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.feature
                 .get()
         val projectDir = File(projectPath)
         // get mvvm Extension

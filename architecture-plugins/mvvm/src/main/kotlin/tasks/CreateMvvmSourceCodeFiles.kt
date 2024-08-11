@@ -17,42 +17,11 @@ import utils.TaskUtil.makeGoodName
 /**
  *@author Vivek Gupta on
  */
-abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
-    @get:Internal
-    abstract val projectPathService: Property<ProjectPathService>
-
-    @Option(
-        option = "sub-path",
-        description = """Generates mvvm architecture inside the sub-path.
-    This plugin generates stuffs under main source set i.e main/packageName/,
-    so if sub-path is given then main/packageName/subPath/""",
-    )
-    fun setSubPath(subPath: String) {
-        projectPathService
-            .get()
-            .parameters.mvvmSubPath
-            .set(subPath)
-        projectPathService
-            .get()
-            .parameters.domainName
-            .set(subPath.makeGoodName())
-    }
-
-    @Option(
-        option = "preferKotlin",
-        description = """ This plugin generates code assuming you have kotlin sourceSets
-    but if you have java sourceSets and you want to generate structure in the java sourceSets you can set this flag to false by
-    using option --no-preferKotlin""",
-    )
-    fun setPreferKotlin(prefer: Boolean) {
-        projectPathService
-            .get()
-            .parameters.useKotlin
-            .set(prefer)
-    }
+abstract class CreateMvvmSourceCodeFiles : OptionTask() {
 
     @TaskAction
-    fun action() {
+    override fun action() {
+        super.action()
         /**
          * model >
          *         domainModels
@@ -61,7 +30,7 @@ abstract class CreateMvvmSourceCodeFiles : DefaultTask() {
          *         repositories
          *         networkModels
          **/
-        project.tasks.getByName(MvvmPluginConstant.TASK_CREATE_MODELS, CreateModels::class).action()
+       project.tasks.getByName(MvvmPluginConstant.TASK_CREATE_MODELS, CreateModels::class).action()
     }
 
     companion object {
