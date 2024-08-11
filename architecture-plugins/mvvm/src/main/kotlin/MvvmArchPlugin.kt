@@ -32,6 +32,7 @@ class MvvmArchPlugin : Plugin<Project> {
                     domainName.set(feature.get().makeGoodName())
                     namespace.set("")
                     autoNamespace.set(true)
+                    explicitPath.set("")
                 }
             }
 

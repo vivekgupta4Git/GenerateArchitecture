@@ -70,6 +70,18 @@ abstract class OptionTask : DefaultTask() {
             .set(prefer)
     }
 
+    @Option(
+        option = "explicitPath",
+        description = "set explicit path for generated source files, default is empty. If you set the path," +
+                "all generated source code file will use this path and ignore any namespace (or extension set by the plugin)" +
+                " whether it was set explicitly or plugin automatically detected it"
+    )
+    fun setExplicitPath(path: String) {
+        projectPathService
+            .get()
+            .parameters.explicitPath
+            .set(path.replace('/','.'))
+    }
 
     @TaskAction
     open fun action(){
@@ -83,13 +95,16 @@ abstract class OptionTask : DefaultTask() {
             .parameters.autoNamespace
             .get()
 
-       if(namespace.isBlank() && !autoNamespace )
-           throw Throwable("Namespace is missing")
-
-        if(autoNamespace){
+        if(autoNamespace) {
             projectPathService.get()
                 .parameters.namespace
                 .set(androidExtension.namespace ?: "")
         }
+
+       if(namespace.isBlank() && !autoNamespace )
+           throw Throwable("Namespace is missing,use --namespace to set project's package name")
+
+
+
     }
 }

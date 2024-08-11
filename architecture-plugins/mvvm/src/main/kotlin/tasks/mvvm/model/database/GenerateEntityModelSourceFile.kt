@@ -52,7 +52,12 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
-        val entityPackageName = "$modifiedPackage.entities"
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
+
+        val entityPackageName = explicitPath.ifEmpty {  "$modifiedPackage.entities"}
         val entityName = "${mvvmSubPath.makeGoodName()}Entity"
         projectDir.writeEntityClass(
             packageName = entityPackageName,

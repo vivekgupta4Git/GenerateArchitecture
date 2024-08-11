@@ -43,6 +43,12 @@ abstract class ProjectPathService :
          * from AppExtension/LibraryExtension of Android project
          */
         val autoNamespace : Property<Boolean>
+
+        /**
+         * use this option to explicitly set the path to generate the source code instead of using
+         * project's package.
+         */
+        val explicitPath : Property<String>
     }
 
     override fun close() {

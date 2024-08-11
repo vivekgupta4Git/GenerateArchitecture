@@ -53,8 +53,12 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
 
-        val domainModelsPackageName = "$modifiedPackage.domainModels"
+        val domainModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.domainModels" }
         val domainModelClassName = "${mvvmSubPath.makeGoodName()}Model"
         projectDir.writeModelClass(
             packageName = domainModelsPackageName,

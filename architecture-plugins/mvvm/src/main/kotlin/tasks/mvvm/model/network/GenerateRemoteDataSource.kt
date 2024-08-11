@@ -55,14 +55,18 @@ abstract class GenerateRemoteDataSource : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
 
-        val networkModelsPackageName = "$modifiedPackage.networkModels"
+        val networkModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.networkModels" }
         val networkModelClassName = "${domainName.makeGoodName()}NetworkModel"
 
-        val restApiName = "${domainName.makeGoodName()}RestApi"
-        val restApiPackageName = "$modifiedPackage.restApi"
+        val restApiName =  "${domainName.makeGoodName()}RestApi"
+        val restApiPackageName = explicitPath.ifEmpty {  "$modifiedPackage.restApi" }
 
-        val dataSourcePackageName = "$modifiedPackage.dataSources"
+        val dataSourcePackageName = explicitPath.ifEmpty {  "$modifiedPackage.dataSources" }
 
         val remoteDataSourceName = "${domainName.makeGoodName()}RemoteDataSource"
         val remoteDependency = DependencyClass(restApiPackageName, restApiName)
