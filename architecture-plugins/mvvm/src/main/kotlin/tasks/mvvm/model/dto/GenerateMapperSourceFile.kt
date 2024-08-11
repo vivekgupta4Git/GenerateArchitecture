@@ -20,7 +20,8 @@ import java.io.File
 abstract class GenerateMapperSourceFile : OptionTask(){
 
     @TaskAction
-    fun action(){
+    override fun action(){
+        super.action()
         val projectPath =
             projectPathService
                 .get()

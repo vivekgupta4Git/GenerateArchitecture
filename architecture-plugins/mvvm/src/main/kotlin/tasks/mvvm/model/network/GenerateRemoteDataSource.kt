@@ -26,7 +26,7 @@ import java.io.File
 
 abstract class GenerateRemoteDataSource : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()

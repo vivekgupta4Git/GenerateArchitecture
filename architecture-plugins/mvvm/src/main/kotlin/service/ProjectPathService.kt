@@ -13,6 +13,8 @@ abstract class ProjectPathService :
         val packageName: Property<String>
         val useKotlin: Property<Boolean>
         val domainName: Property<String>
+        val namespace : Property<String>
+        val autoNamespace : Property<Boolean>
     }
 
     override fun close() {

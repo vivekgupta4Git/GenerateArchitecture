@@ -10,7 +10,8 @@ dependencies{
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
-    implementation("com.android.tools.build:gradle:8.0.2")
+    implementation("com.android.tools.build:gradle:8.5.2")
+
     //noinspection GradleDependency
     implementation("com.squareup:kotlinpoet:1.15.0"){
         exclude(module = "kotlin-reflect")

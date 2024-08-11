@@ -22,7 +22,7 @@ import java.io.Serializable
 
 abstract class GenerateDomainModelSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()

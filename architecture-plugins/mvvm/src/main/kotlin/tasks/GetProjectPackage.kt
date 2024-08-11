@@ -11,10 +11,10 @@ import service.ProjectPathService
 import utils.TaskUtil.getPackageName
 
 abstract class GetProjectPackage : OptionTask() {
-    private val androidExtension = project.extensions.getByName<AndroidExtension>("android")
 
     @TaskAction
-    fun action() {
+    override fun action() {
+        super.action()
         // get the main Source set
         val mainSourceSet = project.layout.projectDirectory.dir("src/main")
 

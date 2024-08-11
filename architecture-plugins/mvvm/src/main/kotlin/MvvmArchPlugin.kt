@@ -30,6 +30,8 @@ class MvvmArchPlugin : Plugin<Project> {
                     useKotlin.set(true)
                     mvvmSubPath.set("feature")
                     domainName.set(mvvmSubPath.get().makeGoodName())
+                    namespace.set("")
+                    autoNamespace.set(true)
                 }
             }
 

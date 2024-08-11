@@ -22,7 +22,7 @@ import java.io.Serializable
 
 abstract class GenerateNetworkModelSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()

@@ -33,7 +33,7 @@ import java.io.File
 
 abstract class GenerateRestApiSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()

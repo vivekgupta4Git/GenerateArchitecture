@@ -1,6 +1,7 @@
 package utils
 
 import architecture.AndroidExtension
+import com.android.build.gradle.AppExtension
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
@@ -62,7 +63,7 @@ object TaskUtil {
     inline fun <reified T> TypeSpec.Builder.addSuperIfNullable(isNullable: Boolean) =
         if (isNullable) this.addSuperinterface(T::class) else this
 
-    fun String.getPackageName(androidExtension: AndroidExtension): String? =
+    fun String.getPackageName(androidExtension: AppExtension): String? =
         if (this.isEmpty()) {
             androidExtension.namespace
         } else {
