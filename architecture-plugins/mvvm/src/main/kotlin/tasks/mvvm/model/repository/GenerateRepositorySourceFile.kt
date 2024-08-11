@@ -74,7 +74,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
         val entityPackageName = "$modifiedPackage.entities"
         val entityName = "${domainName}Entity"
 
-        val dtoPackageName = "$modifiedPackage.dto"
+        val dtoPackageName = "$modifiedPackage.mapper"
         val networkModelPackageName = "$modifiedPackage.networkModels"
         val networkModelName = "${domainName}NetworkModel"
         projectDir.writeRepositoryClass(
@@ -448,7 +448,7 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             ) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_LOCAL_DATA_SOURCE)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_REMOTE_DATA_SOURCE)
-                dependsOn(MvvmPluginConstant.TASK_GENERATE_DTO)
+                dependsOn(MvvmPluginConstant.TASK_GENERATE_MAPPER)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_REPOSITORY_INTERFACE)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GENERATE_REPOSITORY_DESCRIPTION

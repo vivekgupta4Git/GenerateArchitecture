@@ -17,7 +17,7 @@ import utils.TaskUtil.getExtension
 import utils.TaskUtil.modifyPackageName
 import java.io.File
 
-abstract class GenerateDtoSourceFile : OptionTask(){
+abstract class GenerateMapperSourceFile : OptionTask(){
 
     @TaskAction
     fun action(){
@@ -54,7 +54,7 @@ abstract class GenerateDtoSourceFile : OptionTask(){
         val entityPackageName = "$modifiedPackage.entities"
         val entityName = "${domainName}Entity"
 
-        val dtoPackageName = "$modifiedPackage.dto"
+        val dtoPackageName = "$modifiedPackage.mapper"
 
         val networkModelsPackageName = "$modifiedPackage.networkModels"
         val networkModelClassName = "${domainName}NetworkModel"
@@ -212,15 +212,15 @@ abstract class GenerateDtoSourceFile : OptionTask(){
         fileSpec.writeTo(this)
     }
     companion object {
-        fun Project.registerTaskEntityToDomainModel(
+        fun Project.registerTaskMapper(
             serviceProvider: Provider<ProjectPathService>,
-        ): TaskProvider<GenerateDtoSourceFile> =
-            this.tasks.register(MvvmPluginConstant.TASK_GENERATE_DTO,GenerateDtoSourceFile::class.java) {
+        ): TaskProvider<GenerateMapperSourceFile> =
+            this.tasks.register(MvvmPluginConstant.TASK_GENERATE_MAPPER,GenerateMapperSourceFile::class.java) {
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_DOMAIN_MODELS)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_ENTITY_MODELS)
                 dependsOn(MvvmPluginConstant.TASK_GENERATE_NETWORK_MODELS)
                 group = MvvmPluginConstant.PLUGIN_GROUP
-                description = MvvmPluginConstant.TASK_GENERATE_DTO_ENTITY_DESCRIPTION
+                description = MvvmPluginConstant.TASK_GENERATE_MAPPER_DESCRIPTION
 
                 projectPathService.set(serviceProvider)
                 usesService(serviceProvider)
