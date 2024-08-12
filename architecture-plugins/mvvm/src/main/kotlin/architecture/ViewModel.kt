@@ -1,3 +1,5 @@
 package architecture
 
-abstract class ViewModel : ArchitectureProperties()
+abstract class ViewModel : ArchitectureProperties(){
+    override var name = "viewmodel"
+}

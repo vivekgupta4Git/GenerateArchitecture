@@ -1,6 +1,7 @@
 package tasks.mvvm.model.dto
 
 import MvvmPluginConstant
+import architecture.Model
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -10,6 +11,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.getByType
 import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
@@ -39,14 +41,13 @@ abstract class GenerateMapperSourceFile : OptionTask(){
                 .get()
         val projectDir = File(projectPath)
         // model extension
-        val modelExtension = getExtension(project).model
+        val modelExtension = project.extensions.getByType<Model>()
         val modifiedPackage =
             modelExtension
                 .insideDirectory
-                .get()
                 .modifyPackageName(
                     packageName,
-                    modelExtension.name.get(),
+                    modelExtension.name,
                 )
         val explicitPath = projectPathService
             .get()

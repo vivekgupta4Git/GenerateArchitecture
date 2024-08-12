@@ -71,18 +71,6 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }
-configureMvvm {
-    view{
-        name = "Ui"
-    }
-    model{
-        name = "domain"
-    }
-    viewModel{
-        name = "viewModels"
-    }
-}
-
 /*
 mvvmConfig {
     model {

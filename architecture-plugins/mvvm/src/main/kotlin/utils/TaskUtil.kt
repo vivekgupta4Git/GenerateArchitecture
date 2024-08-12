@@ -77,18 +77,15 @@ object TaskUtil {
 
     fun getExtension(project: Project): MvvmConfigurationExtension {
         val extension = project.extensions.getByType<MvvmConfigurationExtension>()
-        if (extension.model.name
-                .get()
+      /*  if (extension.model.name
                 .isBlank() ||
             extension.view.name
-                .get()
                 .isBlank() ||
             extension.viewModel.name
-                .get()
                 .isBlank()
         ) {
             throw Throwable("${MvvmPluginConstant.EXTENSION_NAME} is not properly configured; Please check for blank String")
-        }
+        }*/
 
         return extension
     }

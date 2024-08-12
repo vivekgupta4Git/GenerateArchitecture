@@ -1,2 +1,4 @@
 package architecture
-abstract class Model : ArchitectureProperties()
+abstract class Model : ArchitectureProperties(){
+    override var name = "model"
+}

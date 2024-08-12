@@ -3,6 +3,7 @@ package tasks.mvvm.model.database
 import MvvmPluginConstant
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import architecture.Model
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -11,10 +12,12 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import extension.MvvmConfigurationExtension
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.getByType
 import service.ProjectPathService
 import tasks.OptionTask
 import utils.TaskUtil.getExtension
@@ -41,16 +44,14 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                 .parameters.feature
                 .get()
         val projectDir = File(projectPath)
-        // get mvvm Extension
-        val extension = getExtension(project)
-        val modelExtension = extension.model
+
+        val modelExtension = project.extensions.getByType<Model>()
         val modifiedPackage =
             modelExtension
                 .insideDirectory
-                .get()
                 .modifyPackageName(
                     packageName,
-                    modelExtension.name.get(),
+                    modelExtension.name,
                 )
         val explicitPath = projectPathService
             .get()

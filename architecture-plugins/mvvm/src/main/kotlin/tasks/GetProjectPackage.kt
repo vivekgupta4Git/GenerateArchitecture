@@ -1,12 +1,11 @@
 package tasks
 
-import extension.MvvmConfigurationExtension
+import MvvmPluginConstant
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import service.ProjectPathService
-import utils.TaskUtil.getPackageName
 
 abstract class GetProjectPackage : OptionTask() {
 
@@ -53,11 +52,7 @@ abstract class GetProjectPackage : OptionTask() {
 
     companion object {
         fun Project.registerTaskGetProjectPackage(serviceProvider: Provider<ProjectPathService>): TaskProvider<GetProjectPackage> {
-            val mvvmConfigurationExtension =
-                this.extensions.create(
-                    MvvmPluginConstant.EXTENSION_NAME,
-                    MvvmConfigurationExtension::class.java,
-                )
+
             return this.tasks.register(
                 MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE,
                 GetProjectPackage::class.java,
@@ -65,18 +60,6 @@ abstract class GetProjectPackage : OptionTask() {
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE_DESCRIPTION
 
-                mvvmConfigurationExtension.model {
-                    name.convention("model")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.viewModel {
-                    name.convention("viewModel")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.view {
-                    name.convention("view")
-                    insideDirectory.convention("")
-                }
                 // connection with service
                 projectPathService.set(serviceProvider)
                 usesService(serviceProvider)

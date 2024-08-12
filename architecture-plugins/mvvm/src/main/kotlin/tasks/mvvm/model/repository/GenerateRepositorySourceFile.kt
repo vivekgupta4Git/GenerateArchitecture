@@ -1,6 +1,7 @@
 package tasks.mvvm.model.repository
 
 import MvvmPluginConstant
+import architecture.Model
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -16,6 +17,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.getByType
 import service.ProjectPathService
 import tasks.DependencyClass
 import tasks.OptionTask
@@ -46,18 +48,14 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
                 .get()
         val projectDir = File(projectPath)
         // get mvvm Extension
-        val extension = getExtension(project)
-
-        // model extension
-        val modelExtension = extension.model
+        val modelExtension = project.extensions.getByType<Model>()
 
         // modify package based on the model extension -inside directory
         val modifiedPackage =
             modelExtension.insideDirectory
-                .get()
                 .modifyPackageName(
                     packageName,
-                    modelExtension.name.get(),
+                    modelExtension.name,
                 )
         val explicitPath = projectPathService.get()
             .parameters.explicitPath.get()

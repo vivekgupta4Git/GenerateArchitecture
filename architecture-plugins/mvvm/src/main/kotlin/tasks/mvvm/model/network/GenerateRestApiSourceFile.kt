@@ -1,6 +1,7 @@
 package tasks.mvvm.model.network
 
 import MvvmPluginConstant
+import architecture.Model
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -14,6 +15,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.getByType
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -52,14 +54,13 @@ abstract class GenerateRestApiSourceFile : OptionTask() {
                 .get()
         val projectDir = File(projectPath)
         // model extension
-        val modelExtension = getExtension(project).model
+        val modelExtension = project.extensions.getByType<Model>()
         val modifiedPackage =
             modelExtension
                 .insideDirectory
-                .get()
                 .modifyPackageName(
                     packageName,
-                    modelExtension.name.get(),
+                    modelExtension.name,
                 )
         val explicitPath = projectPathService.get()
             .parameters.explicitPath.get()

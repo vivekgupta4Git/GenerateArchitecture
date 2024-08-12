@@ -1,5 +1,10 @@
+import architecture.Model
+import architecture.View
+import architecture.ViewModel
+import extension.MvvmConfigurationExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.kotlin.dsl.registerIfAbsent
 import service.ProjectPathService
 import tasks.CreateMvvmSourceCodeFiles.Companion.registerCreateMvvmSourceFiles
@@ -50,6 +55,13 @@ class MvvmArchPlugin : Plugin<Project> {
             registerTaskMapper(serviceProvider)
             registerTaskGenerateRepositoryInterface(serviceProvider)
             registerTaskGenerateRepository(serviceProvider)
+            val mvvmExt = extensions.create(MvvmPluginConstant.EXTENSION_NAME, MvvmConfigurationExtension::class.java)
+            val extensionAware = mvvmExt as ExtensionAware
+            extensionAware.apply {
+                extensions.create("model", Model::class.java)
+                extensions.create("view", View::class.java)
+                extensions.create("viewModel", ViewModel::class.java)
+            }
         }
     }
 }
