@@ -1,8 +1,10 @@
 plugins{
     `kotlin-dsl`
+    id("com.gradle.plugin-publish") version "1.2.1"
+
 }
 
-group = "com.ruviapps"
+group = "io.github.vivekgupta4git"
 version = "1.0.0"
 dependencies{
 
@@ -19,8 +21,15 @@ dependencies{
 
 }
 gradlePlugin{
+    website = "https://vivekgupta4git.github.io/"
+    vcsUrl = "https://github.com/vivekgupta4Git/GenerateArchitecture"
     plugins.create("mvvmArch") {
         id = "mvvm-arch"
+        displayName = "Mvvm Architecture Plugin"
         implementationClass = "MvvmArchPlugin"
+        tags = listOf("mvvm","android","gradle")
+        description = "Often implementing mvvm architecture in the android, there are always " +
+                "a boilerplate code. Such as Mapper for converting models from the network to the domain," +
+                "creating data sources and data repositories etc. This plugin aims to reduce the boilerplate such codebase "
     }
 }
