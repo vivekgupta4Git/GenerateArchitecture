@@ -436,8 +436,8 @@ abstract class CreateViewModel : OptionTask() {
     companion object {
         fun Project.registerTaskCreateViewModel(serviceProvider: Provider<ProjectPathService>): TaskProvider<CreateViewModel> =
             this.tasks.register(MvvmPluginConstant.TASK_CREATE_VIEW_MODEL, CreateViewModel::class.java) {
-                // this task needs project's package name and other stuffs to generate the code
-                dependsOn(MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE)
+                // this task needs project's repository to generate the code
+                dependsOn(MvvmPluginConstant.TASK_GENERATE_REPOSITORY)
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_CREATE_VIEW_MODEL_DESCRIPTION
 
