@@ -25,7 +25,7 @@ import java.io.File
 
 abstract class GenerateLocalDataSource : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -55,14 +55,19 @@ abstract class GenerateLocalDataSource : OptionTask() {
                     modelExtension.name.get(),
                 )
 
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
+
         // write entity model
-        val entityPackageName = "$modifiedPackage.entities"
+        val entityPackageName = explicitPath.ifEmpty {  "$modifiedPackage.entities"}
         val entityName = "${domainName}Entity"
         // write dao
-        val daoPackageName = "$modifiedPackage.dao"
+        val daoPackageName = explicitPath.ifEmpty {  "$modifiedPackage.dao" }
         val daoName = "${domainName}Dao"
 
-        val dataSourcePackageName = "$modifiedPackage.dataSources"
+        val dataSourcePackageName = explicitPath.ifEmpty { "$modifiedPackage.dataSources" }
 
         // write local source
         val localDataSourceName = "${domainName}LocalDataSource"

@@ -1,3 +1,4 @@
+import extension.MvvmConfigurationExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.registerIfAbsent
@@ -15,12 +16,14 @@ import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskG
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
 import tasks.mvvm.model.repository.GenerateRepositoryInterface.Companion.registerTaskGenerateRepositoryInterface
 import tasks.mvvm.model.repository.GenerateRepositorySourceFile.Companion.registerTaskGenerateRepository
+import tasks.mvvm.viewmodel.CreateViewModel.Companion.registerTaskCreateViewModel
 import utils.TaskUtil.makeGoodName
 
 /**
  * @author Vivek Gupta
  */
 class MvvmArchPlugin : Plugin<Project> {
+
     override fun apply(project: Project) {
         val serviceProvider =
             project.gradle.sharedServices.registerIfAbsent("projectPathService", ProjectPathService::class) {
@@ -28,10 +31,32 @@ class MvvmArchPlugin : Plugin<Project> {
                     projectPath.set("")
                     packageName.set("")
                     useKotlin.set(true)
-                    mvvmSubPath.set("feature")
-                    domainName.set(mvvmSubPath.get().makeGoodName())
+                    feature.set("feature")
+                    domainName.set(feature.get().makeGoodName())
+                    namespace.set("")
+                    autoNamespace.set(true)
+                    explicitPath.set("")
                 }
             }
+            project.extensions.create(
+                MvvmPluginConstant.EXTENSION_NAME,
+                MvvmConfigurationExtension::class.java,
+            ).apply {
+                model {
+                    name.set("model")
+                    insideDirectory.set("")
+                }
+                viewModel {
+                    name.set("viewModel")
+                    insideDirectory.set("")
+                }
+                view {
+                    name.set("view")
+                    insideDirectory.set("")
+                }
+            }
+
+
 
         with(project) {
             registerTaskGetProjectPackage(serviceProvider)
@@ -47,6 +72,7 @@ class MvvmArchPlugin : Plugin<Project> {
             registerTaskMapper(serviceProvider)
             registerTaskGenerateRepositoryInterface(serviceProvider)
             registerTaskGenerateRepository(serviceProvider)
+            registerTaskCreateViewModel(serviceProvider)
         }
     }
 }

@@ -22,7 +22,7 @@ import java.io.Serializable
 
 abstract class GenerateDomainModelSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -36,7 +36,7 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
         val mvvmSubPath =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.feature
                 .get()
         val projectDir = File(projectPath)
         // get mvvm Extension
@@ -53,8 +53,12 @@ abstract class GenerateDomainModelSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
 
-        val domainModelsPackageName = "$modifiedPackage.domainModels"
+        val domainModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.domainModels" }
         val domainModelClassName = "${mvvmSubPath.makeGoodName()}Model"
         projectDir.writeModelClass(
             packageName = domainModelsPackageName,

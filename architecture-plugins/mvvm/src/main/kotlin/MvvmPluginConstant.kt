@@ -43,4 +43,7 @@ object MvvmPluginConstant {
 
     const val TASK_GENERATE_REPOSITORY = "generateRepository"
     const val TASK_GENERATE_REPOSITORY_DESCRIPTION: String = "This task generates repository implementation of the repository interface"
+
+    const val TASK_CREATE_VIEW_MODEL: String = "createViewModel"
+    const val TASK_CREATE_VIEW_MODEL_DESCRIPTION: String = "This task generates view model"
 }

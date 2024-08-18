@@ -20,7 +20,8 @@ import java.io.File
 abstract class GenerateMapperSourceFile : OptionTask(){
 
     @TaskAction
-    fun action(){
+    override fun action(){
+        super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -47,16 +48,20 @@ abstract class GenerateMapperSourceFile : OptionTask(){
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
 
-        val domainModelsPackageName = "$modifiedPackage.domainModels"
+        val domainModelsPackageName = explicitPath.ifEmpty { "$modifiedPackage.domainModels" }
         val domainModelClassName = "${domainName}Model"
 
-        val entityPackageName = "$modifiedPackage.entities"
+        val entityPackageName = explicitPath.ifEmpty { "$modifiedPackage.entities" }
         val entityName = "${domainName}Entity"
 
-        val dtoPackageName = "$modifiedPackage.mapper"
+        val dtoPackageName = explicitPath.ifEmpty {  "$modifiedPackage.mapper" }
 
-        val networkModelsPackageName = "$modifiedPackage.networkModels"
+        val networkModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.networkModels" }
         val networkModelClassName = "${domainName}NetworkModel"
 
         projectDir.writeEntityToDomain(

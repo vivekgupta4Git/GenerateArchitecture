@@ -24,7 +24,8 @@ import java.io.File
 abstract class GenerateRepositoryInterface  : OptionTask(){
 
     @TaskAction
-    fun action(){
+    override fun action(){
+        super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -56,11 +57,12 @@ abstract class GenerateRepositoryInterface  : OptionTask(){
                     modelExtension.name.get(),
                 )
 
+        val explicitPath = projectPathService.get()
+            .parameters.explicitPath.get()
 
-
-        val domainModelsPackageName = "$modifiedPackage.domainModels"
+        val domainModelsPackageName = explicitPath.ifBlank {  "$modifiedPackage.domainModels" }
         val domainModelClassName = "${domainName}Model"
-        val repositoryPackageName = "$modifiedPackage.repository"
+        val repositoryPackageName = explicitPath.ifBlank {  "$modifiedPackage.repository" }
         val repositoryClassName = "${domainName}Repository"
 
 

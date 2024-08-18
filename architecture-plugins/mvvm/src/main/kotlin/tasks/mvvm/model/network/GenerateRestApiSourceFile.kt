@@ -30,10 +30,11 @@ import utils.TaskUtil.lowerFirstChar
 import utils.TaskUtil.modifyPackageName
 import utils.TaskUtil.wrapInRetrofitResponse
 import java.io.File
+import kotlin.math.exp
 
 abstract class GenerateRestApiSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -60,12 +61,14 @@ abstract class GenerateRestApiSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService.get()
+            .parameters.explicitPath.get()
 
-        val networkModelsPackageName = "$modifiedPackage.networkModels"
+        val networkModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.networkModels"}
         val networkModelClassName = "${domainName}NetworkModel"
         // write rest api
         val restApiName = "${domainName}RestApi"
-        val restApiPackageName = "$modifiedPackage.restApi"
+        val restApiPackageName = explicitPath.ifEmpty {   "$modifiedPackage.restApi" }
 
         projectDir.writeRestApi(
             packageName = restApiPackageName,

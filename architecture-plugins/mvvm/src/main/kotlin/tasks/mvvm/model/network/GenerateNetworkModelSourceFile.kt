@@ -22,7 +22,7 @@ import java.io.Serializable
 
 abstract class GenerateNetworkModelSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -36,7 +36,7 @@ abstract class GenerateNetworkModelSourceFile : OptionTask() {
         val mvvmSubPath =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.feature
                 .get()
         val projectDir = File(projectPath)
         // get mvvm Extension
@@ -53,8 +53,11 @@ abstract class GenerateNetworkModelSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
-
-        val networkModelsPackageName = "$modifiedPackage.networkModels"
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
+        val networkModelsPackageName = explicitPath.ifEmpty {  "$modifiedPackage.networkModels" }
         val networkModelClassName = "${mvvmSubPath.makeGoodName()}NetworkModel"
         projectDir.writeModelClass(
             packageName = networkModelsPackageName,

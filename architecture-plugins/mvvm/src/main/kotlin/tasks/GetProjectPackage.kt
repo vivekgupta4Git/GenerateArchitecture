@@ -1,20 +1,18 @@
 package tasks
 
-import architecture.AndroidExtension
 import extension.MvvmConfigurationExtension
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.getByName
 import service.ProjectPathService
 import utils.TaskUtil.getPackageName
 
 abstract class GetProjectPackage : OptionTask() {
-    private val androidExtension = project.extensions.getByName<AndroidExtension>("android")
 
     @TaskAction
-    fun action() {
+    override fun action() {
+        super.action()
         // get the main Source set
         val mainSourceSet = project.layout.projectDirectory.dir("src/main")
 
@@ -35,45 +33,33 @@ abstract class GetProjectPackage : OptionTask() {
             } else {
                 mainSourceSet.dir("java").asFile.path
             }
-        val packageName =
-            projectPathService
-                .get()
-                .parameters.mvvmSubPath
-                .get()
-                .getPackageName(androidExtension)
+
+        val namespace = projectPathService
+            .get()
+            .parameters.namespace
+            .get()
+        val domainName = projectPathService
+            .get()
+            .parameters.domainName
+            .get()
+        val packageName = "$namespace.${domainName.lowercase()}"
 
         with(projectPathService.get().parameters) {
             this.projectPath.set(projectPath)
             this.packageName.set(packageName)
         }
+
     }
 
     companion object {
         fun Project.registerTaskGetProjectPackage(serviceProvider: Provider<ProjectPathService>): TaskProvider<GetProjectPackage> {
-            val mvvmConfigurationExtension =
-                this.extensions.create(
-                    MvvmPluginConstant.EXTENSION_NAME,
-                    MvvmConfigurationExtension::class.java,
-                )
+
             return this.tasks.register(
                 MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE,
                 GetProjectPackage::class.java,
             ) {
                 group = MvvmPluginConstant.PLUGIN_GROUP
                 description = MvvmPluginConstant.TASK_GET_PROJECT_PACKAGE_DESCRIPTION
-
-                mvvmConfigurationExtension.model {
-                    name.convention("model")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.viewModel {
-                    name.convention("viewModel")
-                    insideDirectory.convention("")
-                }
-                mvvmConfigurationExtension.view {
-                    name.convention("view")
-                    insideDirectory.convention("")
-                }
                 // connection with service
                 projectPathService.set(serviceProvider)
                 usesService(serviceProvider)

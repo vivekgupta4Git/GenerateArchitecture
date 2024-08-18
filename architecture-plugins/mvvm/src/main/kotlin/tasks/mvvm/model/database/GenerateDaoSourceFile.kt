@@ -29,10 +29,11 @@ import utils.TaskUtil.getExtension
 import utils.TaskUtil.lowerFirstChar
 import utils.TaskUtil.modifyPackageName
 import java.io.File
+import kotlin.math.exp
 
 abstract class GenerateDaoSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -64,12 +65,16 @@ abstract class GenerateDaoSourceFile : OptionTask() {
                     modelExtension.name.get(),
                 )
 
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
         // write entity model
-        val entityPackageName = "$modifiedPackage.entities"
+        val entityPackageName = explicitPath.ifEmpty { "$modifiedPackage.entities" }
         val entityName = "${domainName}Entity"
 
         // write dao
-        val daoPackageName = "$modifiedPackage.dao"
+        val daoPackageName = explicitPath.ifEmpty {"$modifiedPackage.dao"}
         val daoName = "${domainName}Dao"
         projectDir.writeDao(
             packageName = daoPackageName,

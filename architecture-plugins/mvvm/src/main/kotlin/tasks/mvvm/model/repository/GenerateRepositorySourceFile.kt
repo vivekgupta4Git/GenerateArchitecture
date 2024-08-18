@@ -23,11 +23,12 @@ import utils.TaskUtil.getExtension
 import utils.TaskUtil.lowerFirstChar
 import utils.TaskUtil.modifyPackageName
 import java.io.File
+import kotlin.math.exp
 
 abstract class GenerateRepositorySourceFile : OptionTask() {
 
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -58,24 +59,26 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
+        val explicitPath = projectPathService.get()
+            .parameters.explicitPath.get()
 
-        val domainModelsPackageName = "$modifiedPackage.domainModels"
+        val domainModelsPackageName = explicitPath.ifBlank {  "$modifiedPackage.domainModels" }
         val domainModelClassName = "${domainName}Model"
-        val repositoryPackageName = "$modifiedPackage.repository"
+        val repositoryPackageName = explicitPath.ifBlank {  "$modifiedPackage.repository" }
 
         val repositoryInterfaceName = "${domainName}Repository"
 
         val repositoryClassName = "${domainName}RepositoryImpl"
-        val dataSourcePackageName = "$modifiedPackage.dataSources"
+        val dataSourcePackageName = explicitPath.ifBlank {  "$modifiedPackage.dataSources" }
 
         val remoteDataSourceName = "${domainName}RemoteDataSource"
         val localDataSourceName = "${domainName}LocalDataSource"
 
-        val entityPackageName = "$modifiedPackage.entities"
+        val entityPackageName = explicitPath.ifBlank {  "$modifiedPackage.entities" }
         val entityName = "${domainName}Entity"
 
-        val dtoPackageName = "$modifiedPackage.mapper"
-        val networkModelPackageName = "$modifiedPackage.networkModels"
+        val dtoPackageName = explicitPath.ifBlank {  "$modifiedPackage.mapper" }
+        val networkModelPackageName =  explicitPath.ifBlank {  "$modifiedPackage.networkModels" }
         val networkModelName = "${domainName}NetworkModel"
         projectDir.writeRepositoryClass(
             repositoryInterfaceName = repositoryInterfaceName,

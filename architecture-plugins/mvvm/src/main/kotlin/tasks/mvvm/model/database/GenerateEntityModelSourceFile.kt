@@ -24,7 +24,7 @@ import java.io.File
 
 abstract class GenerateEntityModelSourceFile : OptionTask() {
     @TaskAction
-    fun action() {
+    override fun action() { super.action()
         val projectPath =
             projectPathService
                 .get()
@@ -38,7 +38,7 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
         val mvvmSubPath =
             projectPathService
                 .get()
-                .parameters.mvvmSubPath
+                .parameters.feature
                 .get()
         val projectDir = File(projectPath)
         // get mvvm Extension
@@ -52,7 +52,12 @@ abstract class GenerateEntityModelSourceFile : OptionTask() {
                     packageName,
                     modelExtension.name.get(),
                 )
-        val entityPackageName = "$modifiedPackage.entities"
+        val explicitPath = projectPathService
+            .get()
+            .parameters.explicitPath
+            .get()
+
+        val entityPackageName = explicitPath.ifEmpty {  "$modifiedPackage.entities"}
         val entityName = "${mvvmSubPath.makeGoodName()}Entity"
         projectDir.writeEntityClass(
             packageName = entityPackageName,
