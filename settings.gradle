@@ -6,7 +6,7 @@ pluginManagement {
         gradlePluginPortal()
     }
     //includeBuildfile("../kotlinpoet/architecture-plugins")
-    includeBuild(file('../kotlinpoet/architecture-plugins').toPath().toRealPath().toAbsolutePath().toString())
+   // includeBuild(file('../kotlinpoet/architecture-plugins').toPath().toRealPath().toAbsolutePath().toString())
 
 
 }
