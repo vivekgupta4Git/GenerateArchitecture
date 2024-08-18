@@ -1,3 +1,4 @@
+import extension.MvvmConfigurationExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.registerIfAbsent
@@ -22,6 +23,7 @@ import utils.TaskUtil.makeGoodName
  * @author Vivek Gupta
  */
 class MvvmArchPlugin : Plugin<Project> {
+
     override fun apply(project: Project) {
         val serviceProvider =
             project.gradle.sharedServices.registerIfAbsent("projectPathService", ProjectPathService::class) {
@@ -36,6 +38,25 @@ class MvvmArchPlugin : Plugin<Project> {
                     explicitPath.set("")
                 }
             }
+            project.extensions.create(
+                MvvmPluginConstant.EXTENSION_NAME,
+                MvvmConfigurationExtension::class.java,
+            ).apply {
+                model {
+                    name.set("model")
+                    insideDirectory.set("")
+                }
+                viewModel {
+                    name.set("viewModel")
+                    insideDirectory.set("")
+                }
+                view {
+                    name.set("view")
+                    insideDirectory.set("")
+                }
+            }
+
+
 
         with(project) {
             registerTaskGetProjectPackage(serviceProvider)
