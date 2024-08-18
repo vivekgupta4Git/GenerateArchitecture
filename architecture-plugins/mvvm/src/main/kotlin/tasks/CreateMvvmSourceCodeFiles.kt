@@ -12,6 +12,7 @@ import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.getByName
 import service.ProjectPathService
 import tasks.mvvm.model.CreateModels
+import tasks.mvvm.viewmodel.CreateViewModel
 import utils.TaskUtil.makeGoodName
 
 /**
@@ -31,6 +32,7 @@ abstract class CreateMvvmSourceCodeFiles : OptionTask() {
          *         networkModels
          **/
        project.tasks.getByName(MvvmPluginConstant.TASK_CREATE_MODELS, CreateModels::class).action()
+       project.tasks.getByName(MvvmPluginConstant.TASK_CREATE_VIEW_MODEL, CreateViewModel::class).action()
     }
 
     companion object {

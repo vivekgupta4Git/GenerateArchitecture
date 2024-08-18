@@ -15,6 +15,7 @@ import tasks.mvvm.model.network.GenerateRemoteDataSource.Companion.registerTaskG
 import tasks.mvvm.model.network.GenerateRestApiSourceFile.Companion.registerTaskGenerateRestApi
 import tasks.mvvm.model.repository.GenerateRepositoryInterface.Companion.registerTaskGenerateRepositoryInterface
 import tasks.mvvm.model.repository.GenerateRepositorySourceFile.Companion.registerTaskGenerateRepository
+import tasks.mvvm.viewmodel.CreateViewModel.Companion.registerTaskCreateViewModel
 import utils.TaskUtil.makeGoodName
 
 /**
@@ -50,6 +51,7 @@ class MvvmArchPlugin : Plugin<Project> {
             registerTaskMapper(serviceProvider)
             registerTaskGenerateRepositoryInterface(serviceProvider)
             registerTaskGenerateRepository(serviceProvider)
+            registerTaskCreateViewModel(serviceProvider)
         }
     }
 }
