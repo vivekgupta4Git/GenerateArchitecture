@@ -33,7 +33,7 @@ buildscript {
 To use the Mvvm Plugin in your project, add the following to your `build.gradle` (Module-level) file:
 ```groovy
 plugins {
-    id 'mvvm-arch' version '<plugin-version>'
+    id 'io.github.vivekgupta4git.mvvm-arch' version '<plugin-version>'
 }
 ```
 Replace <plugin-version> with the latest version of the plugin available on the Gradle Plugin Portal.
