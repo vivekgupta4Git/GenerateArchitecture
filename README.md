@@ -15,6 +15,13 @@ repositories, and ViewModels.
 - **ViewModel Generation**: Generates ViewModel classes tailored to your architecture.
 - **Customizable Configuration**: Configure paths, namespaces, and other settings to suit your project needs.
 
+## MVVM Architecture Benefits
+
+One of the core principles of the MVVM (Model-View-ViewModel) architecture is the separation of concerns. This separation allows different layers of the application (Model, ViewModel, and View) to evolve independently without affecting each other. **This plugin generates code that enables you to refactor a layer without impacting the source code of other layers.**
+
+This capability ensures that your application remains modular, maintainable, and easier to scale over time.
+
+
 ## Installation
 
 Add the following to your `build.gradle` (Project-level) file:
@@ -108,7 +115,8 @@ Some tasks depend on other tasks to generate the required source code. For examp
 - **`generateDomainModel`**: Generates domain model source files.
 - **`generateEntityModel`**: Generates entity model source files.
 - **`generateNetworkModel`**: Generates network model source files.
-Make sure to run the dependent tasks before running tasks that rely on them to ensure all necessary source code is available.
+
+Therefore, running the generateMapper task will result in the generation of these source files, along with the mapper source files
 
 ## How to Get a List of Tasks
 To view the tasks available from the Architecture Plugin and other plugins, run:
