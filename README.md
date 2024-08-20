@@ -26,7 +26,7 @@ This capability ensures that your application remains modular, maintainable, and
 Using the plugin DSL:
 ```groovy
 plugins {
-  id "io.github.vivekgupta4git.mvvm-arch" version "1.0.0"
+  id("io.github.vivekgupta4git.mvvm-arch") version "1.0.2"
 }
 ```
 Using legacy plugin application:
@@ -34,11 +34,11 @@ Using legacy plugin application:
 buildscript {
   repositories {
     maven {
-      url "https://plugins.gradle.org/m2/"
+      url = uri("https://plugins.gradle.org/m2/")
     }
   }
   dependencies {
-    classpath "io.github.vivekgupta4git:mvvm:1.0.0"
+    classpath("io.github.vivekgupta4git:mvvm:1.0.2")
   }
 }
 
