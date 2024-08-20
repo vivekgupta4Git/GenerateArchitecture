@@ -17,3 +17,4 @@ dependencyResolutionManagement {
     }
 }
 include("mvvm")
+rootProject.name = "architecture-plugins"

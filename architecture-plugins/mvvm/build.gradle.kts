@@ -1,10 +1,16 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+
 plugins{
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.2.1"
 }
-
+kotlin{
+    jvmToolchain{
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 group = "io.github.vivekgupta4git"
-version = "1.0.0"
+version = "1.0.2"
 dependencies{
 
     implementation("androidx.room:room-common:2.6.1")
@@ -26,7 +32,7 @@ gradlePlugin{
         id = "io.github.vivekgupta4git.mvvm-arch"
         displayName = "Mvvm Architecture Plugin"
         implementationClass = "MvvmArchPlugin"
-        tags = listOf("mvvm","android")
+        tags = listOf("mvvm","android","architecture")
         description = "Often implementing mvvm architecture in the android, there are always " +
                 "a boilerplate code. Such as Mapper for converting models from the network to the domain," +
                 "creating data sources and data repositories etc. This plugin aims to reduce the boilerplate such codebase "
