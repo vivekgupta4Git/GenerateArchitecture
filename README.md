@@ -1,4 +1,5 @@
-# Mvvm Plugin - Architecture Plugin
+# Mvvm Plugin - Architecture Plugin  
+[Latest Version  1.0.3](https://plugins.gradle.org/plugin/io.github.vivekgupta4git.mvvm-arch)
 
 ## Overview
 
@@ -26,7 +27,7 @@ This capability ensures that your application remains modular, maintainable, and
 Using the plugin DSL:
 ```groovy
 plugins {
-  id("io.github.vivekgupta4git.mvvm-arch") version "1.0.2"
+  id("io.github.vivekgupta4git.mvvm-arch") version "<latest-version>"
 }
 ```
 Using legacy plugin application:
@@ -38,7 +39,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath("io.github.vivekgupta4git:mvvm:1.0.2")
+    classpath("io.github.vivekgupta4git:mvvm:<latest-version>")
   }
 }
 
@@ -105,9 +106,9 @@ The following tasks are available for the Architecture Plugin:
 - **`getProjectPackage`**: Sets the project's package name to the build service, which can be used by other tasks (specific to Android projects).
 
 ## Running Tasks
-You can run individual tasks to generate specific source code files. For example, to generate a domain model for a feature named "asthma," use:
+You can run individual tasks to generate specific source code files. For example, to generate a domain model for a feature named "pizza," use:
 ```bash
-./gradlew generateDomainModel --feature=asthma 
+./gradlew generateDomainModel --feature=pizza 
 ```
 Task Dependencies
 Some tasks depend on other tasks to generate the required source code. For example, the generateMapper task requires the following tasks to be completed first:
