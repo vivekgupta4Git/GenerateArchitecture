@@ -2,10 +2,10 @@
 
 ## Overview
 
-Welcome to the **Mvvm Plugin**, part of the **Architecture Plugin** group. 
-This Gradle plugin automates the generation of source files following the MVVM (Model-View-ViewModel) architecture pattern, 
-streamlining your development process by creating the necessary boilerplate code for you. 
-It is designed to enhance productivity and enforce a clean architecture by generating models, entities, network models, mappers, data sources (remote and local), 
+Welcome to the **Mvvm Plugin**, part of the **Architecture Plugin** group.
+This Gradle plugin automates the generation of source files following the MVVM (Model-View-ViewModel) architecture pattern,
+streamlining your development process by creating the necessary boilerplate code for you.
+It is designed to enhance productivity and enforce a clean architecture by generating models, entities, network models, mappers, data sources (remote and local),
 repositories, and ViewModels.
 
 ## Features
@@ -17,33 +17,37 @@ repositories, and ViewModels.
 
 ## MVVM Architecture Benefits
 
-One of the core principles of the MVVM (Model-View-ViewModel) architecture is the separation of concerns. This separation allows different layers of the application (Model, ViewModel, and View) to evolve independently without affecting each other. **This plugin generates code that enables you to refactor a layer without impacting the source code of other layers.**
+One of the core principles of the MVVM (Model-View-ViewModel) architecture is the separation of concerns. This separation allows different layers of the application (Model, ViewModel, and View)
+to evolve independently without affecting each other.
+**This plugin generates code that enables you to refactor a layer without impacting the source code of other layers.**
 
 This capability ensures that your application remains modular, maintainable, and easier to scale over time.
 
-
 ## Installation
-Using the plugin DSL:
-```groovy
-plugins {
-  id("io.github.vivekgupta4git.mvvm-arch") version "1.0.2"
-}
-```
-Using legacy plugin application:
+
+Add the following to your `build.gradle` (Project-level) file:
+
 ```groovy
 buildscript {
-  repositories {
-    maven {
-      url = uri("https://plugins.gradle.org/m2/")
+    repositories {
+      maven {
+          url = uri("https://plugins.gradle.org/m2/")
+      }
+        //...gradlePluginPortal()
     }
-  }
-  dependencies {
-    classpath("io.github.vivekgupta4git:mvvm:1.0.2")
-  }
+    dependencies {
+        classpath "io.github.vivekgupta4git:mvvm-arch:<latest-version>"
+    }
 }
-
-apply plugin: "io.github.vivekgupta4git.mvvm-arch"
 ```
+To use the Mvvm Plugin in your project, add the following to your `build.gradle` (Module-level) file:
+```groovy
+plugins {
+    id 'mvvm-arch' version '<plugin-version>'
+}
+```
+Replace <plugin-version> with the latest version of the plugin available on the Gradle Plugin Portal.
+
 ## Configuration
 You can configure the plugin using the configureMvvm { } extension block in your build.gradle file:
 ```groovy
@@ -64,8 +68,8 @@ Once the plugin is configured, simply run the Gradle task to generate the MVVM c
 ```bash 
 ./gradlew createMvvm --feature <domain-name>
 ```
-There are options to configure the generated source files. 
-For details on the available options and how to configure them, 
+There are options to configure the generated source files.
+For details on the available options and how to configure them,
 use the following command to get help on the `createMvvm` task:
 ```bash
 ./gradlew help --task createMvvm
@@ -107,7 +111,7 @@ The following tasks are available for the Architecture Plugin:
 ## Running Tasks
 You can run individual tasks to generate specific source code files. For example, to generate a domain model for a feature named "asthma," use:
 ```bash
-./gradlew generateDomainModel --feature=asthma 
+./gradlew generateDomainModel --feature=pizza 
 ```
 Task Dependencies
 Some tasks depend on other tasks to generate the required source code. For example, the generateMapper task requires the following tasks to be completed first:
@@ -127,13 +131,18 @@ If you want to see the all the tasks used by this plugin you can use following c
 ./gradlew tasks --group="Architecture Plugin"
 ```
 
+## List of dependencies generated code requires:
+1. [Room](https://developer.android.com/jetpack/androidx/releases/room)
+2. [Retrofit](https://square.github.io/retrofit/)
+3. [Kotlin Coroutines](https://github.com/Kotlin/kotlinx.coroutines?tab=readme-ov-file#android)
+
 ## Future Enhancements
 
-- In future updates, the Mvvm Plugin will include the ability to generate source files for the View Layers. 
-  This enhancement will enable the plugin to fully automate the creation of the MVVM architecture 
+- In future updates, the Mvvm Plugin will include the ability to generate source files for the View Layers.
+  This enhancement will enable the plugin to fully automate the creation of the MVVM architecture
   by including View Layer components alongside the existing Data Layer and ViewModel components.
 
-- In upcoming versions, the Mvvm Plugin will include tasks to generate test cases for the MVVM components. 
+- In upcoming versions, the Mvvm Plugin will include tasks to generate test cases for the MVVM components.
   These tasks will help you automatically create unit and integration tests for the generated Models, ViewModels,
   Repositories, and other components, ensuring better test coverage and code quality.
 

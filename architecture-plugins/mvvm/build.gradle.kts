@@ -10,7 +10,7 @@ kotlin{
     }
 }
 group = "io.github.vivekgupta4git"
-version = "1.0.3"
+version = "1.0.4"
 dependencies{
 
     implementation("androidx.room:room-common:2.6.1")
@@ -36,6 +36,6 @@ gradlePlugin{
         tags.set(listOf("mvvm","android","architecture"))
         description = "Often implementing mvvm architecture in the android, there are always " +
                 "a boilerplate code. Such as Mapper for converting models from the network to the domain," +
-                "creating data sources and data repositories etc. This plugin aims to reduce the boilerplate such codebase "
+                "creating data sources and data repositories etc. This plugin aims to reduce the boilerplate of such codebase "
     }
 }

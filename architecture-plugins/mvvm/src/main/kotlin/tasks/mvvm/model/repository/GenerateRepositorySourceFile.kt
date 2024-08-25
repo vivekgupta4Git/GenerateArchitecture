@@ -240,13 +240,15 @@ abstract class GenerateRepositorySourceFile : OptionTask() {
             .returns(returnType)
             .beginControlFlow("return flow<Result<List<${domainDependency.className}>>> \n")
             .addStatement("\temitAll(${localDependency.className.lowerFirstChar()}.getAll${domainName}()")
-            .addStatement("·\t\t.map { Result.success(it.toList${domainDependency.className}()) })")
+            .addStatement("·\t\t.map { localData -> Result.success(localData.toList${domainDependency.className}()) })")
             .addStatement("\n${remoteDependency.className.lowerFirstChar()}.getAll${domainName}()")
             .addStatement(
-                "\t.onSuccess {· \n\t\t${localDependency.className.lowerFirstChar()}" +
-                        ".insertAll${domainName}(*it\n\t\t\t.toList${entityDependency.className}()\n\t\t\t.toTypedArray()) \n}"
+                "\t.onSuccess {remoteData ->· \n\t\t${localDependency.className.lowerFirstChar()}" +
+                        ".insertAll${domainName}(*remoteData\n\t\t\t.toList${entityDependency.className}()\n\t\t\t.toTypedArray()) \n}"
             )
             .addStatement("\t.onFailure { emit(Result.failure(it)) }")
+            .addStatement("\temitAll(${localDependency.className.lowerFirstChar()}.getAll${domainName}()")
+            .addStatement("·\t\t.map { localData -> Result.success(localData.toList${domainDependency.className}()) })")
             .endControlFlow()
             .addCode("·.%M()", MemberName("kotlinx.coroutines.flow", "distinctUntilChanged"))
             .build()
