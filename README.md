@@ -1,11 +1,12 @@
-# Mvvm Plugin - Architecture Plugin
+# Mvvm Plugin - Architecture Plugin  
+[Latest Version  1.0.3](https://plugins.gradle.org/plugin/io.github.vivekgupta4git.mvvm-arch)
 
 ## Overview
 
-Welcome to the **Mvvm Plugin**, part of the **Architecture Plugin** group.
-This Gradle plugin automates the generation of source files following the MVVM (Model-View-ViewModel) architecture pattern,
-streamlining your development process by creating the necessary boilerplate code for you.
-It is designed to enhance productivity and enforce a clean architecture by generating models, entities, network models, mappers, data sources (remote and local),
+Welcome to the **Mvvm Plugin**, part of the **Architecture Plugin** group. 
+This Gradle plugin automates the generation of source files following the MVVM (Model-View-ViewModel) architecture pattern, 
+streamlining your development process by creating the necessary boilerplate code for you. 
+It is designed to enhance productivity and enforce a clean architecture by generating models, entities, network models, mappers, data sources (remote and local), 
 repositories, and ViewModels.
 
 ## Features
@@ -24,20 +25,23 @@ to evolve independently without affecting each other.
 This capability ensures that your application remains modular, maintainable, and easier to scale over time.
 
 ## Installation
-
-Add the following to your `build.gradle` (Project-level) file:
-
+Using the plugin DSL:
+```groovy
+plugins {
+  id("io.github.vivekgupta4git.mvvm-arch") version "<latest-version>"
+}
+```
+Using legacy plugin application:
 ```groovy
 buildscript {
-    repositories {
-      maven {
-          url = uri("https://plugins.gradle.org/m2/")
-      }
-        //...gradlePluginPortal()
+  repositories {
+    maven {
+      url = uri("https://plugins.gradle.org/m2/")
     }
-    dependencies {
-        classpath "io.github.vivekgupta4git:mvvm-arch:<latest-version>"
-    }
+  }
+  dependencies {
+    classpath("io.github.vivekgupta4git:mvvm:<latest-version>")
+  }
 }
 ```
 To use the Mvvm Plugin in your project, add the following to your `build.gradle` (Module-level) file:
@@ -109,7 +113,7 @@ The following tasks are available for the Architecture Plugin:
 - **`getProjectPackage`**: Sets the project's package name to the build service, which can be used by other tasks (specific to Android projects).
 
 ## Running Tasks
-You can run individual tasks to generate specific source code files. For example, to generate a domain model for a feature named "asthma," use:
+You can run individual tasks to generate specific source code files. For example, to generate a domain model for a feature named "pizza," use:
 ```bash
 ./gradlew generateDomainModel --feature=pizza 
 ```
