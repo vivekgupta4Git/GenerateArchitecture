@@ -1,5 +1,5 @@
 # Mvvm Plugin - Architecture Plugin  
-[Latest Version  1.0.3](https://plugins.gradle.org/plugin/io.github.vivekgupta4git.mvvm-arch)
+[Latest Version  1.0.4](https://plugins.gradle.org/plugin/io.github.vivekgupta4git.mvvm-arch)
 
 ## Overview
 
